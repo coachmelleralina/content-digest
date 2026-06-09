@@ -25,5 +25,8 @@
   important rules.
 - **Do not loosen TypeScript strictness.** `strict`, `noImplicitAny`, `strictNullChecks`, and
   `noUncheckedIndexedAccess` stay on. Narrow types or guard values instead.
-- **Do not let the dev/preview port drift.** `strictPort: true` is set; if `:5173`/`:4173` are
+- **Do not let the dev/preview port drift.** `strictPort: true` is set; if `:5174`/`:4173` are
   taken, resolve the conflict rather than letting Vite pick another port.
+- **`app/vite.config.ts` is the single source of truth for dev/preview ports.** Keep it in sync
+  with `.dev-port` / `.preview-port` after any port probe — a probe that only rewrites the docs
+  will leave Vite pinned to a stale port and `strictPort: true` will fail to bind.

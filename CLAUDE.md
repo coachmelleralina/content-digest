@@ -36,8 +36,8 @@ App code lives under `app/` and never at the root. See ADR
 6. When in doubt, ask. Use AskUserQuestion rather than guessing requirements.
 7. Keep this file's "Current state" section updated after every merged change.
 8. Dev server lives at `http://127.0.0.1:<DEV_PORT>/` where `DEV_PORT` is recorded in
-   `.dev-port` (defaults to 5173, probed for a free port at bootstrap time). Always read the
-   current port from `.dev-port` instead of hardcoding 5173. `strictPort: true` is set so Vite
+   `.dev-port` (defaults to 5174, probed for a free port at bootstrap time). Always read the
+   current port from `.dev-port` instead of hardcoding 5174. `strictPort: true` is set so Vite
    never silently drifts.
 9. **Retrospective after every feature.** Once a feature is green and committed, write
    `docs/retrospectives/NNN-<slug>.md` capturing what worked, what didn't, and concrete
@@ -69,8 +69,8 @@ Hello world greeting rendered; no features specced beyond Feature 001.
 
 ## Dev server
 
-From the repo root: `npm run dev` → `http://127.0.0.1:5173/` (port read from `.dev-port`,
-defaults 5173).
+From the repo root: `npm run dev` → `http://127.0.0.1:5174/` (port read from `.dev-port`,
+defaults 5174).
 
 ## Common commands (all from repo root)
 
@@ -90,7 +90,8 @@ defaults 5173).
 
 ## Self-improvement log
 
-- (none yet — populated after each feature retro)
+- [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; added the
+  "vite.config.ts is source of truth for ports" constraint.
 
 ## Escalation rules
 
@@ -100,7 +101,7 @@ Stop and ask via AskUserQuestion when:
 - A request conflicts with `docs/constraints.md` or a rule in the "Rules" section of
   `CLAUDE.md` (surface it, don't silently comply).
 - A new runtime dependency is needed (ask + add an ADR before installing).
-- `:5173` or `:4173` is taken (fix the conflict, do not let Vite drift to another port).
+- `:5174` or `:4173` is taken (fix the conflict, do not let Vite drift to another port).
 - This change would push `CLAUDE.md` past ~200 lines (route detail into a linked doc first).
 - Acceptance criteria in a `docs/requirements/feature-*.md` are ambiguous or contradict each
   other.
