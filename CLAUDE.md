@@ -62,6 +62,8 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/PLAN.md](docs/PLAN.md) — MVP build plan (stack, folder structure, build steps)
 - [docs/requirements/feature-001-hello-world.md](docs/requirements/feature-001-hello-world.md) — Feature 001
 - [docs/requirements/feature-002-category-normalization.md](docs/requirements/feature-002-category-normalization.md) — Feature 002 (issue #12)
+- [docs/requirements/feature-003-card-model.md](docs/requirements/feature-003-card-model.md) — Feature 003 (issue #1)
+- [docs/requirements/feature-004-api-scaffold.md](docs/requirements/feature-004-api-scaffold.md) — Feature 004 (issue #5)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -72,16 +74,20 @@ App code lives under `app/` and never at the root. See ADR
 ## Current state
 
 Hello world greeting rendered. MVP scoped (PRD) and planned (PLAN); stack decided via ADRs
-002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). Category-normalization pure module
-(`app/src/lib/categories.ts`, feature 002 / issue #12) implemented and tested — wire it into
-the card-save path when issues #9/#10 land. No other MVP feature code written yet.
+002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). Done so far: category-normalization
+pure module (feature 002 / issue #12 — wire into save path at #9/#10); `Card`/`Section` types,
+7 mock cards, pure `groupByCategory` reusing `resolveCategory` (feature 003 / issue #1);
+FastAPI scaffold in `api/` with `GET /api/health` + pytest (feature 004 / issue #5). Next:
+issues #2 #3 #4 (board UI, UrlInput, api client) and #6 #7 (extract, digest) — all parallel.
 
 ## Dev server
 
 From the repo root: `npm run dev` → `http://127.0.0.1:5174/` (port read from `.dev-port`,
 defaults 5174).
 
-## Common commands (all from repo root)
+## Common commands
+
+Frontend (from repo root):
 
 - `npm run dev` — start the dev server
 - `npm run build` — type-check + production build
@@ -89,6 +95,14 @@ defaults 5174).
 - `npm run test` / `npm run test:run` — Vitest (watch / single run)
 - `npm run lint` — ESLint
 - `npm run format` — Prettier
+
+Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12; see
+[api/README.md](api/README.md)):
+
+- `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.txt` — one-time setup
+- `uvicorn index:app --host 127.0.0.1 --port 8000` — run the API locally (venv active)
+- `python -m pytest` — backend tests (venv active)
+- `curl http://127.0.0.1:8000/api/health` — health check → `{"status":"ok"}`
 
 ## Critical files
 
@@ -104,6 +118,10 @@ defaults 5174).
 - [002-category-normalization](docs/retrospectives/002-category-normalization.md) — pure
   module ahead of its save-path dependency; flagged the pre-existing TS 6 `baseUrl` build
   failure.
+- [003-card-model](docs/retrospectives/003-card-model.md) — data layer for the board;
+  issue text said `normalizeCategory` but the real export is `resolveCategory`.
+- [004-api-scaffold](docs/retrospectives/004-api-scaffold.md) — FastAPI skeleton; system
+  python3 was 3.9, installed Homebrew python@3.12 to match the Vercel runtime.
 
 ## Escalation rules
 
