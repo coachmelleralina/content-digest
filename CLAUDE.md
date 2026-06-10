@@ -101,6 +101,9 @@ defaults 5174).
 
 - [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; added the
   "vite.config.ts is source of truth for ports" constraint.
+- [002-category-normalization](docs/retrospectives/002-category-normalization.md) — pure
+  module ahead of its save-path dependency; flagged the pre-existing TS 6 `baseUrl` build
+  failure.
 
 ## Escalation rules
 
