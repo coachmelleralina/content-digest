@@ -3,11 +3,12 @@
 Concrete build plan for the MVP described in [PRD.md](PRD.md).
 
 > **Governance note:** this stack adds a backend (FastAPI), a database (Postgres), and external
-> runtime deps (OpenRouter), which supersedes the bootstrap constraints ("no backend/database",
-> localStorage persistence) in [constraints.md](constraints.md). Per the working agreement, each
-> of these needs an ADR before implementation: (1) root-level `api/` Python service alongside
-> `app/`, (2) Postgres as the store, (3) OpenRouter as the AI provider. Write those ADRs as the
-> first action of Step 2.
+> runtime deps (OpenRouter), superseding the bootstrap constraints. The decisions are now
+> recorded: [ADR 002](decisions/002-backend-api-on-vercel.md) (root `api/` on Vercel),
+> [ADR 003](decisions/003-postgres-storage.md) (Postgres from the start),
+> [ADR 004](decisions/004-openrouter-ai.md) (OpenRouter, mid-tier model, AI-chosen categories).
+> [constraints.md](constraints.md) is updated to match. Deployment is via the GitHub-connected
+> Vercel project (push to `main` → Vercel builds).
 
 ## Stack
 

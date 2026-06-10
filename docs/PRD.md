@@ -112,14 +112,17 @@ hypotheses to validate.*
 
 ## Open Questions
 
-- **[engineering — blocking]** Extraction approach: pure client-side fetch + readability
-  parser, or a small proxy to avoid CORS? Decide via ADR before the extraction feature.
-- **[engineering — blocking]** AI provider/model for summary/tags/category, and how the API key
-  is supplied (`.env.example` entry, client-exposed vs proxied)?
-- **[product — non-blocking]** Category set: fixed starter list vs. free-form AI-chosen labels
-  (affects how cleanly sections group).
-- **[product — non-blocking]** Persistence ceiling: localStorage is fine for v1 — at what card
-  count do we need IndexedDB?
+Resolved (see ADRs):
+- ~~Extraction approach~~ → server-side in the FastAPI `api/` service ([ADR 002](decisions/002-backend-api-on-vercel.md)).
+- ~~AI provider/model + key handling~~ → OpenRouter, mid-tier balanced model, key server-side only ([ADR 004](decisions/004-openrouter-ai.md)).
+- ~~Category set~~ → free-form, **AI-chosen** labels; sections created dynamically ([ADR 004](decisions/004-openrouter-ai.md)).
+- ~~Persistence~~ → **Postgres from the start**, not localStorage ([ADR 003](decisions/003-postgres-storage.md)).
+
+Still open:
+- **[product — non-blocking]** Near-duplicate AI category labels (e.g. "AI" vs "Artificial
+  Intelligence") — accepted for MVP; add a normalization/merge pass as a P1/P2 follow-up.
+- **[engineering — non-blocking]** Which Postgres provider (Vercel Postgres vs Neon) — decided
+  at deploy time; no code impact.
 
 ## Timeline Considerations
 

@@ -58,14 +58,20 @@ App code lives under `app/` and never at the root. See ADR
 ## Documentation TOC
 
 - [docs/requirements/overview.md](docs/requirements/overview.md) — goal, user, success criteria
+- [docs/PRD.md](docs/PRD.md) — product requirements (problem, scope, MVP success criteria)
+- [docs/PLAN.md](docs/PLAN.md) — MVP build plan (stack, folder structure, build steps)
 - [docs/requirements/feature-001-hello-world.md](docs/requirements/feature-001-hello-world.md) — Feature 001
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
+- [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
+- [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
+- [docs/decisions/004-openrouter-ai.md](docs/decisions/004-openrouter-ai.md) — ADR: OpenRouter AI digest
 - [docs/constraints.md](docs/constraints.md) — what NOT to do
 - [docs/retrospectives/](docs/retrospectives/) — retrospectives (see Self-improvement log)
 
 ## Current state
 
-Hello world greeting rendered; no features specced beyond Feature 001.
+Hello world greeting rendered. MVP scoped (PRD) and planned (PLAN); stack decided via ADRs
+002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). No MVP feature code written yet.
 
 ## Dev server
 

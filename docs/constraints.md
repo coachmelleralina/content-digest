@@ -3,9 +3,12 @@
 ## Project-specific (from the Step 1 interview)
 
 - **No authentication.** No login, user accounts, or auth flows.
-- **No backend or database in the bootstrap.** Article extraction and AI summarization are
-  deferred features; each must be specced in `docs/requirements/feature-*.md` with its own
-  preflight (extraction service / API key) and an ADR before any runtime dependency is added.
+- **Backend + database are now part of the MVP stack** (was "none in the bootstrap"). A Python
+  FastAPI service lives at `api/` and Postgres is the store — see
+  [ADR 002](decisions/002-backend-api-on-vercel.md) / [003](decisions/003-postgres-storage.md) /
+  [004](decisions/004-openrouter-ai.md). New runtime deps beyond this stack still need their own
+  ADR. Secrets (`OPENROUTER_API_KEY`, `DATABASE_URL`) live only in `.env` / Vercel env vars,
+  never committed and never shipped to the client.
 - **No client-side routing / multi-page navigation** for now. Single board view.
 - **No styling framework** (Tailwind, MUI, etc.) yet — minimal inline styles only until a
   styling approach is chosen via an ADR.
@@ -19,7 +22,8 @@
   any proposed workflow change is applied to `CLAUDE.md` / this file in the same session.
 - **No governance files inside `app/`.** `CLAUDE.md`, `README.md`, and `docs/**` stay at the
   repo root.
-- **No app code outside `app/`.** Root-level config (dotfiles, CI) is fine; app code is not.
+- **App code lives in `app/` (frontend) or `api/` (backend) only.** Root-level config (dotfiles,
+  CI, `vercel.json`) is fine; no other app code at the root. Governance files stay at the root.
 - **No `eslint-plugin-react` until it supports ESLint 10.** The current Vite template ships
   ESLint 10; `eslint-plugin-react` is incompatible. `eslint-plugin-react-hooks` covers the
   important rules.
