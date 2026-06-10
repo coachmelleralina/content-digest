@@ -64,6 +64,11 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/feature-002-category-normalization.md](docs/requirements/feature-002-category-normalization.md) — Feature 002 (issue #12)
 - [docs/requirements/feature-003-card-model.md](docs/requirements/feature-003-card-model.md) — Feature 003 (issue #1)
 - [docs/requirements/feature-004-api-scaffold.md](docs/requirements/feature-004-api-scaffold.md) — Feature 004 (issue #5)
+- [docs/requirements/feature-005-board-ui.md](docs/requirements/feature-005-board-ui.md) — Feature 005 (issue #2)
+- [docs/requirements/feature-006-url-input.md](docs/requirements/feature-006-url-input.md) — Feature 006 (issue #3)
+- [docs/requirements/feature-007-api-client.md](docs/requirements/feature-007-api-client.md) — Feature 007 (issue #4)
+- [docs/requirements/feature-008-extract.md](docs/requirements/feature-008-extract.md) — Feature 008 (issue #6)
+- [docs/requirements/feature-009-digest.md](docs/requirements/feature-009-digest.md) — Feature 009 (issue #7)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -73,12 +78,15 @@ App code lives under `app/` and never at the root. See ADR
 
 ## Current state
 
-Hello world greeting rendered. MVP scoped (PRD) and planned (PLAN); stack decided via ADRs
-002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). Done so far: category-normalization
-pure module (feature 002 / issue #12 — wire into save path at #9/#10); `Card`/`Section` types,
-7 mock cards, pure `groupByCategory` reusing `resolveCategory` (feature 003 / issue #1);
-FastAPI scaffold in `api/` with `GET /api/health` + pytest (feature 004 / issue #5). Next:
-issues #2 #3 #4 (board UI, UrlInput, api client) and #6 #7 (extract, digest) — all parallel.
+MVP scoped (PRD/PLAN), stack via ADRs 002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter).
+**Frontend (features 002–007, issues #12 #1 #2 #3 #4):** board UI renders cards grouped by
+category (`Board`/`Section`/`Card`, render-only), `UrlInput` + `validateUrl`, mock-backed
+`lib/api.ts` (`digestUrl`/`listCards`/`deleteCard` + `ApiError`) wired into `App.tsx` —
+end-to-end mock flow works in the browser. 64 vitest tests green.
+**Backend (features 004 008 009, issues #5 #6 #7):** FastAPI scaffold + `extract.py`
+(trafilatura, typed errors) + `digest.py` (OpenRouter, default `anthropic/claude-3.5-haiku`,
+strict JSON parsing). 29 pytest tests green. Not yet routed — `POST /api/digest` is issue #8.
+**Next:** #8 (route) → #9 (Postgres) → #10 (swap mock backend for fetch) → #11 (deploy).
 
 ## Dev server
 
@@ -122,6 +130,16 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
   issue text said `normalizeCategory` but the real export is `resolveCategory`.
 - [004-api-scaffold](docs/retrospectives/004-api-scaffold.md) — FastAPI skeleton; system
   python3 was 3.9, installed Homebrew python@3.12 to match the Vercel runtime.
+- [005-board-ui](docs/retrospectives/005-board-ui.md) — render-only components; reused
+  bootstrap CSS variables for dark mode.
+- [006-url-input](docs/retrospectives/006-url-input.md) — `toErrorMessage` extracted so the
+  component stays render-only.
+- [007-api-client](docs/retrospectives/007-api-client.md) — `erasableSyntaxOnly` forbids TS
+  parameter properties; vitest doesn't catch what `tsc -b` does, so run the full trio.
+- [008-extract](docs/retrospectives/008-extract.md) — trafilatura; `MIN_TEXT_CHARS` guard
+  enforces "never a blank card".
+- [009-digest](docs/retrospectives/009-digest.md) — client-injection seam for httpx tests;
+  snake_case `key_points` ↔ camelCase mapping deferred to the route layer (#8).
 
 ## Escalation rules
 
