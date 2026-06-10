@@ -61,6 +61,7 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/PRD.md](docs/PRD.md) — product requirements (problem, scope, MVP success criteria)
 - [docs/PLAN.md](docs/PLAN.md) — MVP build plan (stack, folder structure, build steps)
 - [docs/requirements/feature-001-hello-world.md](docs/requirements/feature-001-hello-world.md) — Feature 001
+- [docs/requirements/feature-002-category-normalization.md](docs/requirements/feature-002-category-normalization.md) — Feature 002 (issue #12)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -71,7 +72,9 @@ App code lives under `app/` and never at the root. See ADR
 ## Current state
 
 Hello world greeting rendered. MVP scoped (PRD) and planned (PLAN); stack decided via ADRs
-002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). No MVP feature code written yet.
+002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter). Category-normalization pure module
+(`app/src/lib/categories.ts`, feature 002 / issue #12) implemented and tested — wire it into
+the card-save path when issues #9/#10 land. No other MVP feature code written yet.
 
 ## Dev server
 
