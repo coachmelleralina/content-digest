@@ -38,3 +38,6 @@ api/.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# agent worktrees (never commit)
+.claude/worktrees/
