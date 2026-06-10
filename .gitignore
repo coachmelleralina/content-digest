@@ -32,3 +32,9 @@ dist-ssr/
 
 # tests / coverage
 coverage/
+
+# python (api/)
+api/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
