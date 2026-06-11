@@ -1,8 +1,9 @@
-// Render-only section component (feature 005, issue #2; feature 016, issue #15).
+// Render-only section component (feature 005, issue #2; features 016/017).
 // One board section: category heading + its cards, in the order given.
 
 import type { CSSProperties } from 'react';
 import type { Section as SectionModel } from '../types';
+import type { Language } from '../lib/languages';
 import { Card } from './Card';
 
 const heading: CSSProperties = {
@@ -16,11 +17,15 @@ export function Section({
   onDelete,
   onTagClick,
   activeTag,
+  onTranslate,
+  translatingId,
 }: {
   section: SectionModel;
   onDelete: (id: string) => void;
   onTagClick: (tag: string) => void;
   activeTag: string | null;
+  onTranslate: (id: string, language: Language) => void;
+  translatingId: string | null;
 }) {
   return (
     <section>
@@ -32,6 +37,8 @@ export function Section({
           onDelete={onDelete}
           onTagClick={onTagClick}
           activeTag={activeTag}
+          onTranslate={onTranslate}
+          translatingId={translatingId}
         />
       ))}
     </section>

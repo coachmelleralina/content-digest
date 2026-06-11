@@ -14,6 +14,7 @@ const CARD: Card = {
   keyPoints: [{ takeaway: 'one', quote: 'the exact passage grounding point one' }],
   tags: ['x'],
   category: 'Engineering',
+  language: 'uk',
   createdAt: '2026-06-11T10:00:00+00:00',
 };
 
@@ -60,6 +61,34 @@ describe('createHttpBackend', () => {
     const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(path).toBe(`/api/cards/${CARD.id}`);
     expect(init.method).toBe('DELETE');
+  });
+
+  it('translateCard POSTs {language} to /api/cards/{id}/translate and returns the updated card', async () => {
+    const translated: Card = { ...CARD, language: 'en', summary: 'An English summary.' };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, translated));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const card = await createHttpBackend().translateCard(CARD.id, 'en');
+
+    expect(card).toEqual(translated);
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(path).toBe(`/api/cards/${CARD.id}/translate`);
+    expect(init.method).toBe('POST');
+    expect(init.headers).toMatchObject({ 'content-type': 'application/json' });
+    expect(JSON.parse(init.body as string)).toEqual({ language: 'en' });
+  });
+
+  it('maps translate {detail} errors to ApiError with status', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse(404, { detail: 'Card not found' })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createHttpBackend().translateCard('no-such-id', 'ru')).rejects.toMatchObject({
+      name: 'ApiError',
+      message: 'Card not found',
+      status: 404,
+    });
   });
 
   it('maps backend {detail} errors to ApiError with status', async () => {

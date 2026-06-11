@@ -12,6 +12,7 @@ const card = (id: string, tags: string[]): Card => ({
   keyPoints: [{ takeaway: 'a point', quote: null }],
   tags,
   category: 'AI',
+  language: 'uk',
   createdAt: '2026-06-01T10:00:00Z',
 });
 

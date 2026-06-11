@@ -18,6 +18,9 @@ export type Card = {
   keyPoints: KeyPoint[];
   tags: string[];
   category: string;
+  // Feature 017 (issue #16), coordinated with backend issue #14: the card's
+  // current display language ('uk' | 'ru' | 'en'; quotes stay original).
+  language: string;
   createdAt: string;
 };
 

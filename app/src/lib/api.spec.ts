@@ -3,15 +3,18 @@ import type { Card } from '../types';
 import { mockCards } from '../mocks/cards';
 import { resolveCategory } from './categories';
 import { ApiError } from './apiError';
-import { digestUrl, listCards, deleteCard, resetApiMock } from './api';
+import { digestUrl, listCards, deleteCard, translateCard, resetApiMock } from './api';
+import type { Language } from './languages';
 
-// The exact key set of the Card type (feature 003). If Card gains/loses a
-// field, this list — and the API contract — must change consciously.
+// The exact key set of the Card type (feature 003; feature 017 adds
+// `language`). If Card gains/loses a field, this list — and the API
+// contract — must change consciously.
 const CARD_KEYS = [
   'category',
   'createdAt',
   'id',
   'keyPoints',
+  'language',
   'summary',
   'tags',
   'title',
@@ -140,6 +143,40 @@ describe('deleteCard', () => {
   });
 });
 
+describe('translateCard (feature 017, issue #16)', () => {
+  it('replaces the card language and returns the updated card', async () => {
+    const victim = mockCards[0]!;
+    expect(victim.language).toBe('uk');
+
+    const updated = await translateCard(victim.id, 'en');
+
+    expect(updated.id).toBe(victim.id);
+    expect(updated.language).toBe('en');
+    // Mock stand-in for real translation: summary visibly changes.
+    expect(updated.summary).toBe(`[en] ${victim.summary}`);
+    // Everything else survives untouched.
+    expect(updated.url).toBe(victim.url);
+    expect(updated.keyPoints).toEqual(victim.keyPoints);
+    expect(updated.tags).toEqual(victim.tags);
+    expect(updated.category).toBe(victim.category);
+    expect(Object.keys(updated).sort()).toEqual([...CARD_KEYS]);
+  });
+
+  it('persists the translated card in the store (visible via listCards)', async () => {
+    const victim = mockCards[1]!;
+    await translateCard(victim.id, 'ru');
+    const cards = await listCards();
+    expect(cards).toHaveLength(mockCards.length);
+    expect(cards.find((c) => c.id === victim.id)?.language).toBe('ru');
+  });
+
+  it('rejects with ApiError 404 for an unknown id and leaves the store unchanged', async () => {
+    await expectApiError(translateCard('no-such-id', 'en'), 'Card not found', 404);
+    const cards = await listCards();
+    expect(cards.every((c) => c.language === 'uk')).toBe(true);
+  });
+});
+
 describe('resetApiMock', () => {
   it('reseeds the store to the original mock cards', async () => {
     await deleteCard(mockCards[0]!.id);
@@ -152,6 +189,8 @@ describe('resetApiMock', () => {
 const _digest: (url: string) => Promise<Card> = digestUrl;
 const _list: () => Promise<Card[]> = listCards;
 const _del: (id: string) => Promise<void> = deleteCard;
+const _translate: (id: string, language: Language) => Promise<Card> = translateCard;
 void _digest;
 void _list;
 void _del;
+void _translate;
