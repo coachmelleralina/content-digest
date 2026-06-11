@@ -32,6 +32,9 @@ EXPECTED_KEYS = {"id", "url", "title", "summary", "keyPoints", "tags", "category
 def happy_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
     monkeypatch.setattr(index, "digest_text", lambda text, title=None: DIGEST)
+    # Feature 011: the route persists the card; storage behavior is specced in
+    # test_cards_routes.py — here it is a no-op.
+    monkeypatch.setattr(index, "insert_card", lambda card: None)
 
 
 def post_digest(url: object = URL) -> "TestClient.response_class":  # type: ignore[name-defined]
@@ -83,6 +86,7 @@ def test_digest_receives_extracted_text_and_title(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
     monkeypatch.setattr(index, "digest_text", fake_digest)
+    monkeypatch.setattr(index, "insert_card", lambda card: None)
     assert post_digest().status_code == 200
     assert seen == {"text": ARTICLE.text, "title": ARTICLE.title}
 

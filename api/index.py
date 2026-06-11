@@ -12,9 +12,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
+from db import DbError, delete_card, insert_card, list_cards
 from digest import DigestApiError, DigestConfigError, DigestParseError, digest_text
 from extract import EmptyExtractionError, FetchError, NotHtmlError, extract_from_url
 
@@ -75,7 +76,7 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
     except (DigestApiError, DigestParseError) as error:
         raise HTTPException(status_code=502, detail=str(error))
 
-    return {
+    card: dict[str, object] = {
         "id": str(uuid.uuid4()),
         "url": request.url,
         "title": article.title,
@@ -85,3 +86,27 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
         "category": digest.category,
         "createdAt": datetime.now(timezone.utc).isoformat(),
     }
+    try:
+        insert_card(card)
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    return card
+
+
+@app.get("/api/cards")
+def cards_route() -> list[dict[str, object]]:
+    try:
+        return list_cards()
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+
+@app.delete("/api/cards/{card_id}", status_code=204)
+def delete_card_route(card_id: str) -> Response:
+    try:
+        found = delete_card(card_id)
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    if not found:
+        raise HTTPException(status_code=404, detail="Card not found.")
+    return Response(status_code=204)
