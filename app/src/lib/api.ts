@@ -10,13 +10,15 @@ import type { Card } from '../types';
 import { mockCards } from '../mocks/cards';
 import { resolveCategory } from './categories';
 import { ApiError } from './apiError';
+import type { Language } from './languages';
 
-// Internal contract — mirror of the three /api/* routes. Not exported:
+// Internal contract — mirror of the /api/* routes. Not exported:
 // callers depend on the functions below, never on a backend instance.
 interface Backend {
   digestUrl(url: string): Promise<Card>;
   listCards(): Promise<Card[]>;
   deleteCard(id: string): Promise<void>;
+  translateCard(id: string, language: Language): Promise<Card>;
 }
 
 const DIGEST_LATENCY_MS = 300;
@@ -59,6 +61,7 @@ const generateCard = (url: string, parsed: URL, existingCategories: string[]): C
     ],
     tags: [parsed.hostname.split('.')[0] ?? 'web', 'article', 'digest'],
     category: resolveCategory(rawCategory, existingCategories),
+    language: 'uk',
     createdAt: new Date().toISOString(),
   };
 };
@@ -94,6 +97,23 @@ const createMockBackend = (): Backend => {
       }
       cards = cards.filter((c) => c.id !== id);
       return Promise.resolve();
+    },
+
+    // Feature 017 (issue #16): stand-in for the real translate endpoint —
+    // flips the language and visibly marks the summary; everything else
+    // (keyPoints, tags, category, quotes) survives, like the real contract.
+    async translateCard(id: string, language: Language): Promise<Card> {
+      const card = cards.find((c) => c.id === id);
+      if (card === undefined) {
+        throw new ApiError('Card not found', 404);
+      }
+      const translated: Card = {
+        ...structuredClone(card),
+        language,
+        summary: `[${language}] ${card.summary}`,
+      };
+      cards = cards.map((c) => (c.id === id ? translated : c));
+      return structuredClone(translated);
     },
   };
 };
@@ -152,6 +172,15 @@ export const createHttpBackend = (): Backend => ({
   async deleteCard(id: string): Promise<void> {
     await request(`/api/cards/${id}`, { method: 'DELETE' });
   },
+
+  async translateCard(id: string, language: Language): Promise<Card> {
+    const response = await request(`/api/cards/${id}/translate`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ language }),
+    });
+    return (await response.json()) as Card;
+  },
 });
 
 // The one switchable layer: vitest keeps the mock (MODE === 'test'); dev and
@@ -166,6 +195,13 @@ export const listCards = (): Promise<Card[]> => backend.listCards();
 
 /** DELETE /api/cards/{id}. Rejects with ApiError 404 for an unknown id. */
 export const deleteCard = (id: string): Promise<void> => backend.deleteCard(id);
+
+/**
+ * POST /api/cards/{id}/translate {language} → the full updated card
+ * (feature 017, issue #16). Rejects with ApiError (404 unknown id).
+ */
+export const translateCard = (id: string, language: Language): Promise<Card> =>
+  backend.translateCard(id, language);
 
 /** Test-only: reseed the mock store. Deleted with the mock backend in issue #10. */
 export const resetApiMock = (): void => {

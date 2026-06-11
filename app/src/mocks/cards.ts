@@ -29,6 +29,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['ai-agents', 'strategy', 'platforms'],
     category: 'AI',
+    language: 'uk',
     createdAt: '2026-06-09T08:15:00Z',
   },
   {
@@ -55,6 +56,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['research', 'scaling-laws', 'efficiency'],
     category: 'Artificial Intelligence',
+    language: 'uk',
     createdAt: '2026-05-28T14:40:00Z',
   },
   {
@@ -81,6 +83,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['leadership', 'hiring', 'scale-ups'],
     category: 'Startups',
+    language: 'uk',
     createdAt: '2026-06-02T09:00:00Z',
   },
   {
@@ -106,6 +109,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['founders', 'no-code', 'venture'],
     category: 'Startups',
+    language: 'uk',
     createdAt: '2026-06-07T17:25:00Z',
   },
   {
@@ -132,6 +136,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['sleep', 'neuroscience', 'longevity'],
     category: 'Health',
+    language: 'uk',
     createdAt: '2026-05-21T11:05:00Z',
   },
   {
@@ -158,6 +163,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['fitness', 'endurance', 'training'],
     category: 'Health',
+    language: 'uk',
     createdAt: '2026-06-05T07:50:00Z',
   },
   {
@@ -184,6 +190,7 @@ export const mockCards: Card[] = [
     ],
     tags: ['coaching', 'ethics', 'icf'],
     category: 'Coaching',
+    language: 'uk',
     createdAt: '2026-06-10T13:30:00Z',
   },
 ];

@@ -1,11 +1,13 @@
-// Render-only card component (feature 005, issue #2; feature 016, issue #15).
-// Pure presentation of one Card — no branching or data transforms here:
-// tag-state logic lives in lib/filterByTag, deep links in lib/fragmentUrl.
+// Render-only card component (feature 005, issue #2; feature 016, issue #15;
+// feature 017, issue #16). Pure presentation of one Card — no branching or
+// data transforms here: tag-state logic lives in lib/filterByTag, deep links
+// in lib/fragmentUrl, languages in lib/languages.
 
 import type { CSSProperties } from 'react';
 import type { Card as CardModel } from '../types';
 import { isSameTag } from '../lib/filterByTag';
 import { takeawayHref } from '../lib/fragmentUrl';
+import { SUPPORTED_LANGUAGES, languageLabel, type Language } from '../lib/languages';
 
 const box: CSSProperties = {
   border: '1px solid var(--border, #ddd)',
@@ -84,6 +86,40 @@ const tagButtonActive: CSSProperties = {
   border: '1px solid var(--accent-border, #c4b5fd)',
 };
 
+// Per-card UA|RU|EN switcher (feature 017): compact chips next to the
+// category badge; the current language gets the active-tag-chip treatment.
+const langGroup: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'baseline',
+  gap: '0.2rem',
+  marginLeft: '0.75rem',
+};
+
+const langButton: CSSProperties = {
+  fontSize: '0.7rem',
+  fontFamily: 'inherit',
+  color: 'inherit',
+  background: 'var(--code-bg, #f4f4f5)',
+  border: '1px solid var(--border, #ddd)',
+  borderRadius: '999px',
+  padding: '0.1rem 0.45rem',
+  cursor: 'pointer',
+};
+
+const langButtonActive: CSSProperties = {
+  ...langButton,
+  fontWeight: 600,
+  color: 'var(--accent, #6b21a8)',
+  background: 'var(--accent-bg, #f3e8ff)',
+  border: '1px solid var(--accent-border, #c4b5fd)',
+  cursor: 'default',
+};
+
+const langBusyHint: CSSProperties = {
+  fontSize: '0.7rem',
+  opacity: 0.6,
+};
+
 const deleteButton: CSSProperties = {
   fontSize: '0.75rem',
   border: '1px solid var(--border, #ddd)',
@@ -101,12 +137,17 @@ export function Card({
   onDelete,
   onTagClick,
   activeTag,
+  onTranslate,
+  translatingId,
 }: {
   card: CardModel;
   onDelete: (id: string) => void;
   onTagClick: (tag: string) => void;
   activeTag: string | null;
+  onTranslate: (id: string, language: Language) => void;
+  translatingId: string | null;
 }) {
+  const isTranslating = translatingId === card.id;
   return (
     <article style={box}>
       <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -115,6 +156,23 @@ export function Card({
         </a>
         <span style={{ display: 'flex', alignItems: 'baseline' }}>
           <span style={badge}>{card.category}</span>
+          <span style={langGroup} aria-label="Перевести карточку">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                type="button"
+                key={lang}
+                style={lang === card.language ? langButtonActive : langButton}
+                // The current language is a no-op (disabled, never calls
+                // back); everything is disabled while this card translates.
+                disabled={lang === card.language || isTranslating}
+                aria-pressed={lang === card.language}
+                onClick={() => onTranslate(card.id, lang)}
+              >
+                {languageLabel(lang)}
+              </button>
+            ))}
+            {isTranslating && <span style={langBusyHint}>…</span>}
+          </span>
           <button type="button" style={deleteButton} onClick={() => onDelete(card.id)}>
             ✕
           </button>

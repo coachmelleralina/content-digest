@@ -2,8 +2,9 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { greeting } from './greeting';
 import { Board } from './components/Board';
 import UrlInput from './components/UrlInput';
-import { deleteCard, digestUrl, listCards } from './lib/api';
+import { deleteCard, digestUrl, listCards, translateCard } from './lib/api';
 import { filterByTag, isSameTag } from './lib/filterByTag';
+import type { Language } from './lib/languages';
 import { toErrorMessage } from './lib/validateUrl';
 import type { Card } from './types';
 
@@ -33,6 +34,8 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  // Feature 017: id of the card currently being translated (one at a time).
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   useEffect(() => {
     listCards()
@@ -52,6 +55,16 @@ export default function App() {
     deleteCard(id)
       .then(() => setCards((prev) => prev.filter((card) => card.id !== id)))
       .catch((error: unknown) => setBoardError(toErrorMessage(error)));
+  };
+
+  // Translate one card in place: the updated card replaces the old one, so
+  // the board regroups naturally if the category came back different.
+  const handleTranslate = (id: string, language: Language) => {
+    setTranslatingId(id);
+    translateCard(id, language)
+      .then((updated) => setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c))))
+      .catch((error: unknown) => setBoardError(toErrorMessage(error)))
+      .finally(() => setTranslatingId(null));
   };
 
   // Clicking the already-active tag clears the filter.
@@ -92,6 +105,8 @@ export default function App() {
           onDelete={handleDelete}
           onTagClick={handleTagClick}
           activeTag={activeTag}
+          onTranslate={handleTranslate}
+          translatingId={translatingId}
         />
       )}
     </main>

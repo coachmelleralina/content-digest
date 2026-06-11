@@ -9,6 +9,7 @@ const card = (overrides: Partial<Card> & Pick<Card, 'id' | 'category' | 'created
   summary: `Summary ${overrides.id}`,
   keyPoints: [{ takeaway: 'a point', quote: null }],
   tags: ['a-tag'],
+  language: 'uk',
   ...overrides,
 });
 
