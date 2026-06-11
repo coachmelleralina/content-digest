@@ -30,8 +30,8 @@ client-side in the browser. No accounts, no team features.
    scheduled fetch) — validate the core loop first.
 4. **No reading/annotation layer** (full-text storage, reader mode, highlights) — Content
    Digest summarizes, it isn't a reader.
-5. **No search / advanced filtering / custom taxonomies** in v1 — topic sections are the only
-   organizing primitive for now.
+5. **No search / custom taxonomies** in v1 — topic sections plus tag-click filtering (issue
+   #15) are the organizing primitives; free-text search stays out.
 
 ## User Stories
 
@@ -41,11 +41,17 @@ client-side in the browser. No accounts, no team features.
 - As a reader, when a URL is unreachable or can't be parsed, I want a clear error instead of a
   broken card, so that I trust what lands on my board.
 
-**Reader — digest**
-- As a reader, I want each card to show a short summary and key points, so that I can recall an
-  article without re-opening it.
-- As a reader, I want tags and a suggested category on each card, so that related articles are
-  findable and grouped.
+**Reader — digest** *(revised 2026-06-11 — see issues #13–#16)*
+- As a reader, I want each card to EXPLAIN the article in very simple language (like to a
+  child): what it is about and which thoughts I can take away for myself — not an academic
+  summary — so that I understand the piece without effort.
+- As a reader, I want the digest in my chosen language (UA/RU/EN) and the ability to translate
+  an existing card into another language, so that the board speaks my language regardless of
+  the article's original one.
+- As a reader, I want tags to be canonical reusable topics (not word salad from the text), so
+  that clicking a tag shows me every article on that topic.
+- As a reader, I want a suggested category on each card, so that related articles group into
+  sections.
 
 **Reader — organize & manage**
 - As a reader, I want new cards filed into a section matching their category, so that my board
