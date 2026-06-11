@@ -189,6 +189,22 @@ def test_digest_text_rejects_unknown_language_before_http() -> None:
         digest_text(SOURCE_TEXT, client=mock_client(handler), language="fr")
 
 
+def test_payload_requests_lowest_latency_provider(monkeypatch) -> None:
+    """OpenRouter from Vercel routed to slow providers (177s vs 8s local, found
+    live) — the payload must pin provider sorting to latency."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    seen = {}
+
+    def handler(request):
+        import json as _json
+        seen.update(_json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": _json.dumps(VALID_PAYLOAD)}}]})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    digest_text("some text", client=client)
+    assert seen.get("provider") == {"sort": "latency"}
+
+
 def test_allowed_languages_constant() -> None:
     assert set(ALLOWED_LANGUAGES) == {"uk", "ru", "en"}
 

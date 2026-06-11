@@ -248,6 +248,9 @@ def digest_text(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": build_user_prompt(text, title)},
         ],
+        # Vercel-egress calls were routed to slow providers (177s vs 8s local,
+        # found live) — pin OpenRouter routing to the lowest-latency provider.
+        "provider": {"sort": "latency"},
     }
     headers = {"Authorization": f"Bearer {api_key}"}
 
