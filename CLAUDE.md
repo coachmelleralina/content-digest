@@ -72,6 +72,7 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/feature-010-digest-route.md](docs/requirements/feature-010-digest-route.md) — Feature 010 (issue #8)
 - [docs/requirements/feature-011-cards-persistence.md](docs/requirements/feature-011-cards-persistence.md) — Feature 011 (issue #9)
 - [docs/requirements/feature-012-frontend-real-api.md](docs/requirements/feature-012-frontend-real-api.md) — Feature 012 (issue #10)
+- [docs/requirements/feature-013-vercel-deploy.md](docs/requirements/feature-013-vercel-deploy.md) — Feature 013 (issue #11)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -90,9 +91,11 @@ Board-level error display in App. 70 vitest tests green.
 OpenRouter digest → card, persisted), `GET /api/cards`, `DELETE /api/cards/{id}`. Storage:
 `db.py` + `schema.sql` (psycopg, one connection/request, apply via `python db.py`). 57 pytest
 green; digest smoke-tested live (free-model override in `api/.env` — key is free-tier).
-**Blocked:** no Postgres exists yet in the Vercel account — create it, `vercel env pull`,
-then live-verify #9 + visual e2e for #10 (proxy + error paths already verified live).
-**Next:** #11 (deploy).
+**Deployed (feature 013, issue #11): https://content-digest.vercel.app** — public (owner's
+choice), Neon Postgres via Vercel integration (env vars are sensitive: values exist only inside
+deployments), OpenRouter funded → paid default model. Prod e2e green: digest → persist → list →
+delete. Deploys via `npx vercel deploy --prod` (GitHub auto-deploy not wired yet).
+**Backlog:** #12 wiring (normalize categories on save), rate limiting, GitHub auto-deploy.
 
 ## Dev server
 
@@ -153,6 +156,9 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
   external resources exist via API before planning around them.
 - [012-frontend-real-api](docs/retrospectives/012-frontend-real-api.md) — Backend-seam swap
   needed zero component changes; a fetch Response body is single-use in specs.
+- [013-vercel-deploy](docs/retrospectives/013-vercel-deploy.md) — sensitive env vars are
+  unreadable outside deployments (ensure-schema on cold start); Vercel python needs a sys.path
+  shim; static-build mounts under the source-dir prefix.
 
 ## Escalation rules
 
