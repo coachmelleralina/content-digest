@@ -41,3 +41,4 @@ __pycache__/
 
 # agent worktrees (never commit)
 .claude/worktrees/
+.vercel
