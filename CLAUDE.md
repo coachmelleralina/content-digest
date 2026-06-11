@@ -173,6 +173,9 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
   source of row-tuple order: change it, both mappers, and the roundtrip fixture together.
 - [017-card-translate-ui](docs/retrospectives/017-card-translate-ui.md) — disabled-button-as-
   no-op keeps components render-only; extract a shared makeCard spec factory next touch.
+- [018-live-bugfixes](docs/retrospectives/018-live-bugfixes.md) — OpenRouter routed Vercel
+  egress to a 20×-slower provider (fix: provider sort=latency + haiku-4.5 → 177s→9s); dashes
+  and bullet markers silently broke text-fragment links.
 
 ## Escalation rules
 
