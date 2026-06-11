@@ -45,9 +45,11 @@ client-side in the browser. No accounts, no team features.
 - As a reader, I want each card to EXPLAIN the article in very simple language (like to a
   child): what it is about and which thoughts I can take away for myself — not an academic
   summary — so that I understand the piece without effort.
-- As a reader, I want the digest in my chosen language (UA/RU/EN) and the ability to translate
-  an existing card into another language, so that the board speaks my language regardless of
-  the article's original one.
+- As a reader, I want to translate a card RIGHT ON the card (UA/RU/EN switcher next to the
+  article, no app-wide language setting), so that I translate only when and what I want.
+- As a reader, I want each takeaway to be CLICKABLE and lead to the exact passage in the
+  original article (text-fragment deep link with the grounding quote), so that I can read the
+  source of that thought in context.
 - As a reader, I want tags to be canonical reusable topics (not word salad from the text), so
   that clicking a tag shows me every article on that topic.
 - As a reader, I want a suggested category on each card, so that related articles group into
