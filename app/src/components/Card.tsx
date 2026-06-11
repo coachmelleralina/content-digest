@@ -1,8 +1,11 @@
-// Render-only card component (feature 005, issue #2).
-// Pure presentation of one Card — no branching or data transforms here.
+// Render-only card component (feature 005, issue #2; feature 016, issue #15).
+// Pure presentation of one Card — no branching or data transforms here:
+// tag-state logic lives in lib/filterByTag, deep links in lib/fragmentUrl.
 
 import type { CSSProperties } from 'react';
 import type { Card as CardModel } from '../types';
+import { isSameTag } from '../lib/filterByTag';
+import { takeawayHref } from '../lib/fragmentUrl';
 
 const box: CSSProperties = {
   border: '1px solid var(--border, #ddd)',
@@ -45,6 +48,16 @@ const pointsList: CSSProperties = {
   lineHeight: 1.5,
 };
 
+// Subtle but visible: a takeaway with a grounding quote is clickable and
+// jumps to the exact passage in the article (text-fragment deep link).
+const takeawayLink: CSSProperties = {
+  color: 'inherit',
+  textDecoration: 'underline',
+  textDecorationStyle: 'dotted',
+  textDecorationColor: 'var(--accent, #6b21a8)',
+  textUnderlineOffset: '0.2em',
+};
+
 const tagsRow: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
@@ -52,12 +65,23 @@ const tagsRow: CSSProperties = {
   marginTop: '0.75rem',
 };
 
-const tagChip: CSSProperties = {
+const tagButton: CSSProperties = {
   fontSize: '0.75rem',
+  fontFamily: 'inherit',
+  color: 'inherit',
   background: 'var(--code-bg, #f4f4f5)',
   border: '1px solid var(--border, #ddd)',
   borderRadius: '999px',
   padding: '0.1rem 0.55rem',
+  cursor: 'pointer',
+};
+
+const tagButtonActive: CSSProperties = {
+  ...tagButton,
+  fontWeight: 600,
+  color: 'var(--accent, #6b21a8)',
+  background: 'var(--accent-bg, #f3e8ff)',
+  border: '1px solid var(--accent-border, #c4b5fd)',
 };
 
 const deleteButton: CSSProperties = {
@@ -75,9 +99,13 @@ const deleteButton: CSSProperties = {
 export function Card({
   card,
   onDelete,
+  onTagClick,
+  activeTag,
 }: {
   card: CardModel;
   onDelete: (id: string) => void;
+  onTagClick: (tag: string) => void;
+  activeTag: string | null;
 }) {
   return (
     <article style={box}>
@@ -94,15 +122,31 @@ export function Card({
       </header>
       <p style={summaryText}>{card.summary}</p>
       <ul style={pointsList}>
-        {card.keyPoints.map((point) => (
-          <li key={point}>{point}</li>
-        ))}
+        {card.keyPoints.map((point) => {
+          const href = takeawayHref(card.url, point.quote);
+          return (
+            <li key={point.takeaway}>
+              {href === null ? (
+                point.takeaway
+              ) : (
+                <a href={href} target="_blank" rel="noopener noreferrer" style={takeawayLink}>
+                  {point.takeaway}
+                </a>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <div style={tagsRow}>
         {card.tags.map((tag) => (
-          <span key={tag} style={tagChip}>
+          <button
+            type="button"
+            key={tag}
+            style={isSameTag(tag, activeTag) ? tagButtonActive : tagButton}
+            onClick={() => onTagClick(tag)}
+          >
             {tag}
-          </span>
+          </button>
         ))}
       </div>
     </article>

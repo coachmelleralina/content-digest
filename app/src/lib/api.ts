@@ -53,9 +53,9 @@ const generateCard = (url: string, parsed: URL, existingCategories: string[]): C
       `A digest of "${title}" from ${parsed.hostname}: the piece lays out its core argument, ` +
       'supports it with concrete examples, and closes with practical takeaways for the reader.',
     keyPoints: [
-      `Main argument of "${title}" distilled into one sentence`,
-      'Strongest supporting evidence the author offers',
-      'One practical takeaway to apply this week',
+      { takeaway: `Main argument of "${title}" distilled into one sentence`, quote: null },
+      { takeaway: 'Strongest supporting evidence the author offers', quote: null },
+      { takeaway: 'One practical takeaway to apply this week', quote: null },
     ],
     tags: [parsed.hostname.split('.')[0] ?? 'web', 'article', 'digest'],
     category: resolveCategory(rawCategory, existingCategories),
