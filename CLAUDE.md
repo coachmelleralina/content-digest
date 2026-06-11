@@ -71,6 +71,7 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/feature-009-digest.md](docs/requirements/feature-009-digest.md) — Feature 009 (issue #7)
 - [docs/requirements/feature-010-digest-route.md](docs/requirements/feature-010-digest-route.md) — Feature 010 (issue #8)
 - [docs/requirements/feature-011-cards-persistence.md](docs/requirements/feature-011-cards-persistence.md) — Feature 011 (issue #9)
+- [docs/requirements/feature-012-frontend-real-api.md](docs/requirements/feature-012-frontend-real-api.md) — Feature 012 (issue #10)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -81,16 +82,17 @@ App code lives under `app/` and never at the root. See ADR
 ## Current state
 
 MVP scoped (PRD/PLAN), stack via ADRs 002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter).
-**Frontend (features 002–007, issues #12 #1 #2 #3 #4):** board UI renders cards grouped by
-category (`Board`/`Section`/`Card`, render-only), `UrlInput` + `validateUrl`, mock-backed
-`lib/api.ts` (`digestUrl`/`listCards`/`deleteCard` + `ApiError`) wired into `App.tsx` —
-end-to-end mock flow works in the browser. 64 vitest tests green.
+**Frontend (features 002–007 012, issues #12 #1–#4 #10):** board UI (`Board`/`Section`/`Card`
+render-only, delete via callback prop), `UrlInput` + `validateUrl`, `lib/api.ts` now talks to
+the real backend over fetch (Vite proxy `/api`→:8000 in dev; vitest keeps the mock backend).
+Board-level error display in App. 70 vitest tests green.
 **Backend (features 004 008–011, issues #5–#9):** FastAPI serves `POST /api/digest` (extract →
 OpenRouter digest → card, persisted), `GET /api/cards`, `DELETE /api/cards/{id}`. Storage:
 `db.py` + `schema.sql` (psycopg, one connection/request, apply via `python db.py`). 57 pytest
 green; digest smoke-tested live (free-model override in `api/.env` — key is free-tier).
 **Blocked:** no Postgres exists yet in the Vercel account — create it, `vercel env pull`,
-then live-verify #9. **Next:** #10 (frontend mock→fetch) → #11 (deploy).
+then live-verify #9 + visual e2e for #10 (proxy + error paths already verified live).
+**Next:** #11 (deploy).
 
 ## Dev server
 
@@ -149,6 +151,8 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
 - [011-cards-persistence](docs/retrospectives/011-cards-persistence.md) — storage layer done,
   live DB check deferred: the Vercel account had no Postgres despite expectations — verify
   external resources exist via API before planning around them.
+- [012-frontend-real-api](docs/retrospectives/012-frontend-real-api.md) — Backend-seam swap
+  needed zero component changes; a fetch Response body is single-use in specs.
 
 ## Escalation rules
 
