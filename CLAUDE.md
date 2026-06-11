@@ -141,8 +141,8 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
 - [002-category-normalization](docs/retrospectives/002-category-normalization.md) — pure
   module ahead of its save-path dependency; flagged the pre-existing TS 6 `baseUrl` build
   failure.
-- [003-card-model](docs/retrospectives/003-card-model.md) — data layer for the board;
-  issue text said `normalizeCategory` but the real export is `resolveCategory`.
+- [003-card-model](docs/retrospectives/003-card-model.md) — board data layer; issue text
+  misnamed the feature-002 export (`resolveCategory`).
 - [004-api-scaffold](docs/retrospectives/004-api-scaffold.md) — FastAPI skeleton; system
   python3 was 3.9, installed Homebrew python@3.12 to match the Vercel runtime.
 - [005-board-ui](docs/retrospectives/005-board-ui.md) — render-only components; reused
