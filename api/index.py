@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
-from db import DbError, delete_card, insert_card, list_cards
+from db import DbError, apply_schema, delete_card, insert_card, list_cards
 from digest import DigestApiError, DigestConfigError, DigestParseError, digest_text
 from extract import EmptyExtractionError, FetchError, NotHtmlError, extract_from_url
 
@@ -38,6 +38,17 @@ def _load_dotenv() -> None:
 
 
 _load_dotenv()
+
+# Ensure-schema on cold start (feature 013): schema.sql is idempotent
+# (CREATE TABLE IF NOT EXISTS), and Vercel's Neon DATABASE_URL is a sensitive
+# env var readable only inside deployments — so the app self-initializes
+# instead of relying on a manual migration step. Failure is non-fatal here;
+# the request-path DbError mapping reports problems cleanly.
+if os.environ.get("DATABASE_URL"):
+    try:
+        apply_schema()
+    except Exception:  # noqa: BLE001 — never block startup on DDL
+        pass
 
 app = FastAPI(title="content-digest api")
 

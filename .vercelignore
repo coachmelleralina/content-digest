@@ -1,0 +1,10 @@
+# never upload local env, venvs, tests, or governance-only files
+api/.venv
+api/__pycache__
+api/.pytest_cache
+api/test_*.py
+api/fixtures
+.claude
+docs
+.dev-server.log
+.dev-server.pid
