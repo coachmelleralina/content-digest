@@ -18,6 +18,8 @@ from urllib.parse import urlparse
 # extract) need it. Locally (uvicorn from api/) this is a no-op.
 sys.path.insert(0, str(Path(__file__).parent))
 
+from typing import Literal
+
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
@@ -66,6 +68,9 @@ def health() -> dict[str, str]:
 
 class DigestRequest(BaseModel):
     url: str
+    # Feature 014: digest language (explanation + takeaways); quotes stay in the
+    # article's original language. Other values → 422 via pydantic.
+    language: Literal["uk", "ru", "en"] = "uk"
 
     @field_validator("url")
     @classmethod
@@ -87,7 +92,7 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
         raise HTTPException(status_code=422, detail=error.message)
 
     try:
-        digest = digest_text(article.text, title=article.title)
+        digest = digest_text(article.text, title=article.title, language=request.language)
     except DigestConfigError as error:
         raise HTTPException(status_code=500, detail=str(error))
     except (DigestApiError, DigestParseError) as error:
@@ -98,7 +103,11 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
         "url": request.url,
         "title": article.title,
         "summary": digest.summary,
-        "keyPoints": digest.key_points,
+        # Feature 014: keyPoints are {takeaway, quote} objects (quote may be null)
+        "keyPoints": [
+            {"takeaway": point.takeaway, "quote": point.quote}
+            for point in digest.key_points
+        ],
         "tags": digest.tags,
         "category": digest.category,
         "createdAt": datetime.now(timezone.utc).isoformat(),
