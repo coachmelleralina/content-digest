@@ -1,5 +1,6 @@
-"""Feature 010 (issue #8) — POST /api/digest route: wiring + error mapping.
+"""Feature 010 (issue #8) + feature 014 (issue #13) — POST /api/digest route.
 
+Wiring + error mapping + language param + keyPoints object mapping.
 No network: extract_from_url and digest_text are monkeypatched on the index module.
 """
 
@@ -12,15 +13,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 import index
-from digest import Digest, DigestApiError, DigestConfigError, DigestParseError
+from digest import Digest, DigestApiError, DigestConfigError, DigestParseError, KeyPoint
 from extract import EmptyExtractionError, ExtractedArticle, FetchError, NotHtmlError
 
 client = TestClient(index.app, raise_server_exceptions=False)
 
 ARTICLE = ExtractedArticle(title="A Readable Title", text="Long enough article text. " * 20)
 DIGEST = Digest(
-    summary="A concise summary of the article.",
-    key_points=["First takeaway", "Second takeaway"],
+    summary="Проста відповідь: стаття про тестування.",
+    key_points=[
+        KeyPoint(takeaway="Перша думка", quote="Long enough article text."),
+        KeyPoint(takeaway="Друга думка", quote=None),  # hallucinated quote was nulled
+    ],
     tags=["testing", "fastapi"],
     category="Engineering",
 )
@@ -31,14 +35,16 @@ EXPECTED_KEYS = {"id", "url", "title", "summary", "keyPoints", "tags", "category
 @pytest.fixture
 def happy_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
-    monkeypatch.setattr(index, "digest_text", lambda text, title=None: DIGEST)
+    monkeypatch.setattr(
+        index, "digest_text", lambda text, title=None, language="uk": DIGEST
+    )
     # Feature 011: the route persists the card; storage behavior is specced in
     # test_cards_routes.py — here it is a no-op.
     monkeypatch.setattr(index, "insert_card", lambda card: None)
 
 
-def post_digest(url: object = URL) -> "TestClient.response_class":  # type: ignore[name-defined]
-    return client.post("/api/digest", json={"url": url})
+def post_digest(url: object = URL, **extra: object) -> "TestClient.response_class":  # type: ignore[name-defined]
+    return client.post("/api/digest", json={"url": url, **extra})
 
 
 # --- happy path ---------------------------------------------------------------
@@ -56,9 +62,17 @@ def test_happy_path_card_contents(happy_wiring: None) -> None:
     assert card["url"] == URL
     assert card["title"] == ARTICLE.title
     assert card["summary"] == DIGEST.summary
-    assert card["keyPoints"] == DIGEST.key_points  # snake_case -> camelCase mapping
     assert card["tags"] == DIGEST.tags
     assert card["category"] == DIGEST.category
+
+
+def test_key_points_map_to_camelcase_objects(happy_wiring: None) -> None:
+    # feature 014: keyPoints are {takeaway, quote} objects, quote may be null
+    card = post_digest().json()
+    assert card["keyPoints"] == [
+        {"takeaway": "Перша думка", "quote": "Long enough article text."},
+        {"takeaway": "Друга думка", "quote": None},
+    ]
 
 
 def test_happy_path_id_is_uuid4(happy_wiring: None) -> None:
@@ -76,19 +90,47 @@ def test_happy_path_created_at_is_utc_iso8601(happy_wiring: None) -> None:
     assert age < 60
 
 
-def test_digest_receives_extracted_text_and_title(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_digest_receives_extracted_text_title_and_default_language(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     seen: dict[str, object] = {}
 
-    def fake_digest(text: str, title: str | None = None) -> Digest:
+    def fake_digest(text: str, title: str | None = None, *, language: str = "uk") -> Digest:
         seen["text"] = text
         seen["title"] = title
+        seen["language"] = language
         return DIGEST
 
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
     monkeypatch.setattr(index, "digest_text", fake_digest)
     monkeypatch.setattr(index, "insert_card", lambda card: None)
-    assert post_digest().status_code == 200
-    assert seen == {"text": ARTICLE.text, "title": ARTICLE.title}
+    assert post_digest().status_code == 200  # no language in body → default "uk"
+    assert seen == {"text": ARTICLE.text, "title": ARTICLE.title, "language": "uk"}
+
+
+# --- language param (feature 014) ----------------------------------------------
+
+
+@pytest.mark.parametrize("language", ["uk", "ru", "en"])
+def test_explicit_language_is_passed_to_digest(
+    monkeypatch: pytest.MonkeyPatch, language: str
+) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_digest(text: str, title: str | None = None, *, language: str = "uk") -> Digest:
+        seen["language"] = language
+        return DIGEST
+
+    monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
+    monkeypatch.setattr(index, "digest_text", fake_digest)
+    monkeypatch.setattr(index, "insert_card", lambda card: None)
+    assert post_digest(language=language).status_code == 200
+    assert seen["language"] == language
+
+
+@pytest.mark.parametrize("language", ["de", "UA", "ukrainian", "", 42])
+def test_unsupported_language_returns_422(happy_wiring: None, language: object) -> None:
+    assert post_digest(language=language).status_code == 422
 
 
 # --- error mapping ------------------------------------------------------------

@@ -1,8 +1,13 @@
-"""Feature 009 (issue #7) — text → {summary, key_points, tags, category} via OpenRouter.
+"""Features 009 + 014 (issues #7, #13) — text → ELI5 digest via OpenRouter.
 
 One chat-completion call per digest (ADR 004). Pure-ish module: takes text, returns a
 validated `Digest` or raises a typed error whose `str()` is safe to show to the user
-(PRD: never a blank/broken card). Route wiring happens in issue #8.
+(PRD: never a blank/broken card).
+
+Feature 014 rework: `summary` is a simple-words EXPLANATION (like to a child),
+`key_points` are {takeaway, quote} objects where the quote is a verbatim source
+fragment (verified code-side; hallucinated quotes become None), `tags` are canonical
+reusable topics (normalized code-side), and the digest language is uk/ru/en.
 
 Config (env):
 - OPENROUTER_API_KEY — required, server-side only.
@@ -25,15 +30,48 @@ REQUEST_TIMEOUT_SECONDS = 60.0
 
 _CODE_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*\n?(.*?)\n?```\s*$", re.DOTALL)
 
-_SYSTEM_PROMPT = (
-    "You summarize articles. Respond with STRICT JSON only — a single JSON object, "
-    "no markdown, no code fences, no commentary. The object must have exactly these keys:\n"
-    '- "summary": string, 2-3 sentence summary of the article;\n'
-    '- "key_points": array of 1 to 8 short strings, the main takeaways;\n'
-    '- "tags": array of 1 to 6 short lowercase topic tags;\n'
-    '- "category": string, a single short free-form topic label of your choosing '
-    "(e.g. a board section name), one line, no newlines."
-)
+ALLOWED_LANGUAGES = ("uk", "ru", "en")
+_LANGUAGE_NAMES = {"uk": "Ukrainian", "ru": "Russian", "en": "English"}
+MAX_TAGS = 4
+MAX_TAG_CHARS = 24
+
+
+def build_system_prompt(language: str) -> str:
+    """System prompt for the ELI5 digest (feature 014). Pure helper.
+
+    Raises ValueError for a language outside ALLOWED_LANGUAGES.
+    """
+    if language not in ALLOWED_LANGUAGES:
+        raise ValueError(
+            f"Unsupported digest language {language!r}; allowed: {', '.join(ALLOWED_LANGUAGES)}."
+        )
+    lang_name = _LANGUAGE_NAMES[language]
+    return (
+        "You explain articles in very simple words, like to a curious child: what the "
+        "article is about, why it matters, and which thoughts the reader can take away. "
+        "Respond with STRICT JSON only — a single JSON object, no markdown, no code "
+        "fences, no commentary. The object must have exactly these keys:\n"
+        f'- "summary": string, 2-4 sentences in {lang_name} that EXPLAIN the article in '
+        "simple words: what it is about and why it is important. Explain like to a child "
+        "— no jargon; if a technical term is unavoidable, explain it in brackets right "
+        "after it;\n"
+        '- "key_points": array of 3 to 5 objects, each with exactly two keys:\n'
+        f'  - "takeaway": string in {lang_name} — one practical thought the reader takes '
+        "away for themselves, worded simply;\n"
+        '  - "quote": string — a SHORT verbatim fragment (at most 12 words) copied '
+        "EXACTLY, character for character, from the article text, grounding this "
+        "takeaway. Keep the quote in the article's ORIGINAL language. Do not paraphrase, "
+        "do not translate, do not fix typos or punctuation — copy the fragment exactly "
+        "as it appears in the text;\n"
+        '- "tags": array of 2 to 4 canonical topic tags: each tag is one general '
+        'lowercase concept (e.g. "продуктивність", "ai", "здоров\'я") that could be '
+        "reused across many different articles. Prefer broad canonical topics over "
+        "phrases taken from the text;\n"
+        '- "category": string, a single short free-form topic label of your choosing '
+        "(e.g. a board section name), one line, no newlines.\n"
+        f'Write "summary" and every "takeaway" in {lang_name}. Quotes stay in the '
+        "article's original language."
+    )
 
 
 class DigestError(Exception):
@@ -56,13 +94,69 @@ class DigestApiError(DigestError):
         self.status = status
 
 
+class KeyPoint(BaseModel):
+    """One grounded takeaway (feature 014). `quote` is a verbatim source fragment;
+    it becomes None when code-side verification can't find it in the source text."""
+
+    takeaway: str
+    quote: str | None = None
+
+    @field_validator("takeaway")
+    @classmethod
+    def _takeaway_non_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("takeaway must be a non-empty string")
+        return value.strip()
+
+
+def normalize_tags(tags: list[str]) -> list[str]:
+    """Canonical-tag normalization (feature 014). Pure helper.
+
+    Strip, lowercase, truncate each tag to MAX_TAG_CHARS, drop empties, keep at
+    most MAX_TAGS (truncate the list — never reject).
+    """
+    cleaned = [tag.strip().lower()[:MAX_TAG_CHARS] for tag in tags]
+    return [tag for tag in cleaned if tag][:MAX_TAGS]
+
+
+def _normalize_ws(text: str) -> str:
+    """Collapse all whitespace runs to single spaces (for quote matching)."""
+    return " ".join(text.split())
+
+
+def verify_quotes(key_points: list[KeyPoint], source_text: str) -> list[KeyPoint]:
+    """Ground-check quotes against the source (feature 014). Pure helper.
+
+    A quote must occur in the source text under whitespace-normalized comparison;
+    otherwise it is replaced with None. Takeaways are always kept.
+    """
+    haystack = _normalize_ws(source_text)
+    verified: list[KeyPoint] = []
+    for point in key_points:
+        quote = point.quote
+        if quote is not None and _normalize_ws(quote) not in haystack:
+            quote = None
+        verified.append(KeyPoint(takeaway=point.takeaway, quote=quote))
+    return verified
+
+
 class Digest(BaseModel):
-    """Structured digest of one article (ADR 004). Category is free-form, AI-chosen."""
+    """Structured digest of one article (ADR 004 + feature 014).
+
+    Summary is an ELI5 explanation; key_points are grounded {takeaway, quote}
+    objects; tags are canonical topics (normalized); category is free-form."""
 
     summary: str
-    key_points: list[str] = Field(min_length=1, max_length=8)
-    tags: list[str] = Field(min_length=1, max_length=6)
+    key_points: list[KeyPoint] = Field(min_length=1, max_length=8)
+    tags: list[str] = Field(min_length=1, max_length=MAX_TAGS)
     category: str
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _normalize_tags(cls, value: object) -> object:
+        if isinstance(value, list) and all(isinstance(tag, str) for tag in value):
+            return normalize_tags(value)
+        return value
 
     @field_validator("summary")
     @classmethod
@@ -122,13 +216,20 @@ def digest_text(
     text: str,
     title: str | None = None,
     *,
+    language: str = "uk",
     client: httpx.Client | None = None,
 ) -> Digest:
     """Digest article text via ONE OpenRouter chat-completion call.
 
-    `client` is injectable for tests (httpx.MockTransport); production uses a real
-    httpx.Client. Raises DigestConfigError / DigestApiError / DigestParseError.
+    `language` (uk/ru/en, feature 014) selects the explanation/takeaway language;
+    quotes stay in the article's original language and are verified against the
+    source text (hallucinated quotes become None). `client` is injectable for tests
+    (httpx.MockTransport); production uses a real httpx.Client. Raises ValueError
+    for an unsupported language, else DigestConfigError / DigestApiError /
+    DigestParseError.
     """
+    system_prompt = build_system_prompt(language)  # raises ValueError early
+
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
         raise DigestConfigError(
@@ -139,7 +240,7 @@ def digest_text(
     payload = {
         "model": os.environ.get("OPENROUTER_MODEL", DEFAULT_MODEL),
         "messages": [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": build_user_prompt(text, title)},
         ],
     }
@@ -173,4 +274,7 @@ def digest_text(
             "The AI service returned an unexpected response. Please try again."
         ) from exc
 
-    return _parse_digest(content)
+    digest = _parse_digest(content)
+    # Feature 014: ground-check quotes against the FULL original text (a superset
+    # of the truncated prompt text) — hallucinated quotes become None.
+    return digest.model_copy(update={"key_points": verify_quotes(digest.key_points, text)})

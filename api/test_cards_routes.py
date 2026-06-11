@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 import index
 from db import DbError
-from digest import Digest
+from digest import Digest, KeyPoint
 from extract import ExtractedArticle
 
 client = TestClient(index.app, raise_server_exceptions=False)
@@ -39,8 +39,8 @@ def test_digest_inserts_returned_card(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         index,
         "digest_text",
-        lambda text, title=None: Digest(
-            summary="s", key_points=["k"], tags=["t"], category="C"
+        lambda text, title=None, language="uk": Digest(
+            summary="s", key_points=[KeyPoint(takeaway="k", quote=None)], tags=["t"], category="C"
         ),
     )
     monkeypatch.setattr(index, "insert_card", inserted.append)
@@ -58,8 +58,8 @@ def test_digest_db_failure_maps_to_500(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         index,
         "digest_text",
-        lambda text, title=None: Digest(
-            summary="s", key_points=["k"], tags=["t"], category="C"
+        lambda text, title=None, language="uk": Digest(
+            summary="s", key_points=[KeyPoint(takeaway="k", quote=None)], tags=["t"], category="C"
         ),
     )
 
