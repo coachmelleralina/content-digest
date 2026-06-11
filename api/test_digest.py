@@ -221,6 +221,22 @@ def test_verify_quotes_passes_none_through() -> None:
     assert verify_quotes(points, SOURCE_TEXT)[0].quote is None
 
 
+def test_verify_quotes_strips_leading_list_markers() -> None:
+    """Extracted text carries '- ' / '* ' / '\u2022 ' bullet markup that the rendered
+    page does not show — keep the quote but without the marker, so the
+    text-fragment deep link can actually match the DOM (issue found live)."""
+    source = "Intro.\n- Assign roles to define what actions are allowed.\nMore."
+    points = [kp(quote="- Assign roles to define what actions")]
+    verified = verify_quotes(points, source)
+    assert verified[0].quote == "Assign roles to define what actions"
+
+
+def test_verify_quotes_strips_markers_before_matching() -> None:
+    # Marker stripped -> the remaining text must still be verified in source.
+    points = [kp(quote="\u2022 totally hallucinated bullet")]
+    assert verify_quotes(points, SOURCE_TEXT)[0].quote is None
+
+
 def test_digest_text_nulls_hallucinated_quotes() -> None:
     payload = dict(
         VALID_PAYLOAD,

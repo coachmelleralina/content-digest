@@ -37,4 +37,12 @@ describe('takeawayHref', () => {
       'https://example.com/a#:~:text=%D0%BC%D1%8B%D1%81%D0%BB%D1%8C',
     );
   });
+
+  it('percent-encodes dashes — special in the text-directive syntax', () => {
+    // encodeURIComponent leaves "-" as-is, but in #:~:text= a dash separates
+    // prefix-/textStart/-suffix, so an unescaped dash breaks the directive.
+    expect(takeawayHref('https://example.com/a', 'time-management tips')).toBe(
+      'https://example.com/a#:~:text=time%2Dmanagement%20tips',
+    );
+  });
 });

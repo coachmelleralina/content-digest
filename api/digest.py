@@ -134,6 +134,11 @@ def verify_quotes(key_points: list[KeyPoint], source_text: str) -> list[KeyPoint
     verified: list[KeyPoint] = []
     for point in key_points:
         quote = point.quote
+        if quote is not None:
+            # Extracted text shows list items as "- item" / "* item" / "\u2022 item",
+            # but the rendered page does not include the marker — strip it so
+            # the text-fragment deep link can match the real DOM text.
+            quote = re.sub(r"^[\s\-\*\u2022\u2013\u2014]+", "", quote).strip() or None
         if quote is not None and _normalize_ws(quote) not in haystack:
             quote = None
         verified.append(KeyPoint(takeaway=point.takeaway, quote=quote))

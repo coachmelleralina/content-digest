@@ -11,5 +11,8 @@ export const takeawayHref = (articleUrl: string, quote: string | null): string |
   if (quote === null) return null;
   const hashIndex = articleUrl.indexOf('#');
   const base = hashIndex === -1 ? articleUrl : articleUrl.slice(0, hashIndex);
-  return `${base}#:~:text=${encodeURIComponent(quote)}`;
+  // encodeURIComponent leaves "-" unescaped, but it is special in the
+  // text-directive syntax (prefix-/textStart/-suffix) — escape it ourselves.
+  const encoded = encodeURIComponent(quote).replace(/-/g, '%2D');
+  return `${base}#:~:text=${encoded}`;
 };

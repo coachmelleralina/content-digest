@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -92,12 +93,14 @@ class DigestRequest(BaseModel):
 
 @app.post("/api/digest")
 def digest_route(request: DigestRequest) -> dict[str, object]:
+    t0 = time.monotonic()
     try:
         article = extract_from_url(request.url)
     except FetchError as error:
         raise HTTPException(status_code=502, detail=error.message)
     except (NotHtmlError, EmptyExtractionError) as error:
         raise HTTPException(status_code=422, detail=error.message)
+    t1 = time.monotonic()
 
     try:
         digest = digest_text(article.text, title=article.title, language=request.language)
@@ -105,6 +108,8 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
         raise HTTPException(status_code=500, detail=str(error))
     except (DigestApiError, DigestParseError) as error:
         raise HTTPException(status_code=502, detail=str(error))
+    t2 = time.monotonic()
+    print(f"PHASE-TIMING digest: extract={t1 - t0:.1f}s ai={t2 - t1:.1f}s")
 
     card: dict[str, object] = {
         "id": str(uuid.uuid4()),
@@ -156,12 +161,14 @@ def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, o
     if card is None:
         raise HTTPException(status_code=404, detail="Card not found.")
 
+    t0 = time.monotonic()
     try:
         article = extract_from_url(str(card["url"]))
     except FetchError as error:
         raise HTTPException(status_code=502, detail=error.message)
     except (NotHtmlError, EmptyExtractionError) as error:
         raise HTTPException(status_code=422, detail=error.message)
+    t1 = time.monotonic()
 
     try:
         digest = digest_text(article.text, title=article.title, language=request.language)
@@ -169,6 +176,8 @@ def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, o
         raise HTTPException(status_code=500, detail=str(error))
     except (DigestApiError, DigestParseError) as error:
         raise HTTPException(status_code=502, detail=str(error))
+    t2 = time.monotonic()
+    print(f"PHASE-TIMING translate: extract={t1 - t0:.1f}s ai={t2 - t1:.1f}s")
 
     updated: dict[str, object] = {
         **card,
