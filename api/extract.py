@@ -113,7 +113,18 @@ def fetch_html(
     """
     try:
         with httpx.Client(
-            follow_redirects=True, timeout=timeout, transport=transport
+            follow_redirects=True,
+            timeout=timeout,
+            transport=transport,
+            # Several sites (e.g. Wikipedia) reject httpx's default UA with 403.
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0 Safari/537.36 content-digest/0.1"
+                ),
+                "Accept": "text/html,application/xhtml+xml",
+            },
         ) as client:
             response = client.get(url)
     except httpx.HTTPError as exc:

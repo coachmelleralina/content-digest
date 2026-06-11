@@ -125,3 +125,16 @@ def test_fetch_html_raises_fetch_error_on_network_error() -> None:
 
     with pytest.raises(FetchError):
         fetch_html("https://unreachable.example", transport=httpx.MockTransport(handler))
+
+
+def test_fetch_html_sends_browserlike_user_agent() -> None:
+    """Sites like Wikipedia 403 the default python-httpx UA (found in #8 smoke test)."""
+    seen: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["user-agent"] = request.headers.get("user-agent", "")
+        return httpx.Response(200, headers={"content-type": "text/html"}, text="<html>x</html>")
+
+    fetch_html("https://example.com/a", transport=httpx.MockTransport(handler))
+    assert "Mozilla/" in seen["user-agent"]
+    assert "python-httpx" not in seen["user-agent"]
