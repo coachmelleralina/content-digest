@@ -7,10 +7,16 @@ ASGI variable. Keep `app` at module level; do not wrap it in a factory.
 from __future__ import annotations
 
 import os
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+
+# On Vercel the entrypoint is imported by path (/var/task/api/index.py) and
+# sys.path does NOT include this directory — sibling imports (db, digest,
+# extract) need it. Locally (uvicorn from api/) this is a no-op.
+sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator

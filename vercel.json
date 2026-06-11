@@ -6,7 +6,10 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/assets/(.*)", "dest": "/app/assets/$1" },
+    { "src": "/favicon.svg", "dest": "/app/favicon.svg" },
+    { "src": "/icons.svg", "dest": "/app/icons.svg" },
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "app/dist/index.html" }
+    { "src": "/(.*)", "dest": "/app/index.html" }
   ]
 }
