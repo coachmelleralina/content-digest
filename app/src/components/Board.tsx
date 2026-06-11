@@ -1,7 +1,7 @@
-// Render-only board component (feature 005, issue #2).
+// Render-only board component (feature 005, issue #2; feature 016, issue #15).
 // Grouping/sorting/merging all happens in the pure groupByCategory module
 // (feature 003); the only conditional here is the empty state, driven
-// directly by that module's output.
+// directly by that module's output. Tag filtering happens upstream in App.
 
 import type { CSSProperties } from 'react';
 import type { Card as CardModel } from '../types';
@@ -23,9 +23,13 @@ const emptyState: CSSProperties = {
 export function Board({
   cards,
   onDelete,
+  onTagClick,
+  activeTag,
 }: {
   cards: CardModel[];
   onDelete: (id: string) => void;
+  onTagClick: (tag: string) => void;
+  activeTag: string | null;
 }) {
   const sections = groupByCategory(cards);
   return (
@@ -34,7 +38,13 @@ export function Board({
         <p style={emptyState}>paste a link to start</p>
       ) : (
         sections.map((section) => (
-          <Section key={section.category} section={section} onDelete={onDelete} />
+          <Section
+            key={section.category}
+            section={section}
+            onDelete={onDelete}
+            onTagClick={onTagClick}
+            activeTag={activeTag}
+          />
         ))
       )}
     </div>

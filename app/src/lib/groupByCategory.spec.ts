@@ -7,7 +7,7 @@ const card = (overrides: Partial<Card> & Pick<Card, 'id' | 'category' | 'created
   url: `https://example.com/${overrides.id}`,
   title: `Title ${overrides.id}`,
   summary: `Summary ${overrides.id}`,
-  keyPoints: ['a point'],
+  keyPoints: [{ takeaway: 'a point', quote: null }],
   tags: ['a-tag'],
   ...overrides,
 });

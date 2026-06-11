@@ -11,7 +11,7 @@ const CARD: Card = {
   url: 'https://example.com/a',
   title: 'A Title',
   summary: 'A summary.',
-  keyPoints: ['one'],
+  keyPoints: [{ takeaway: 'one', quote: 'the exact passage grounding point one' }],
   tags: ['x'],
   category: 'Engineering',
   createdAt: '2026-06-11T10:00:00+00:00',

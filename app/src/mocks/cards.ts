@@ -13,9 +13,19 @@ export const mockCards: Card[] = [
     summary:
       'Argues that AI agents have crossed from demos to dependable delegation, and that the winners of this shift are platforms that own the trust layer — auth, payments, and audit trails — rather than the models themselves.',
     keyPoints: [
-      'Agent reliability passed the "unattended hour" threshold in late 2025',
-      'Value accrues to trust infrastructure, not raw model capability',
-      'Enterprises adopt agents department-by-department, starting with ops',
+      {
+        takeaway: 'Agent reliability passed the "unattended hour" threshold in late 2025',
+        quote:
+          'For the first time, median enterprise agents ran a full hour unattended without a single human intervention — the threshold operators told us mattered most.',
+      },
+      {
+        takeaway: 'Value accrues to trust infrastructure, not raw model capability',
+        quote: 'The models are becoming commodities; the audit trail is becoming the product.',
+      },
+      {
+        takeaway: 'Enterprises adopt agents department-by-department, starting with ops',
+        quote: null,
+      },
     ],
     tags: ['ai-agents', 'strategy', 'platforms'],
     category: 'AI',
@@ -28,9 +38,20 @@ export const mockCards: Card[] = [
     summary:
       'A large-scale study from EPFL shows sparsely activated networks matching dense models with a third of the training compute, reviving interest in conditional computation and challenging the "bigger is better" orthodoxy.',
     keyPoints: [
-      'Sparse mixture models matched dense baselines at ~35% of the FLOPs',
-      'Gains held across language, vision, and protein-folding benchmarks',
-      'Routing instability remains the main blocker for production use',
+      {
+        takeaway: 'Sparse mixture models matched dense baselines at ~35% of the FLOPs',
+        quote:
+          'Across all three benchmark families, the sparse models reached dense-baseline quality using roughly 35 percent of the training FLOPs.',
+      },
+      {
+        takeaway: 'Gains held across language, vision, and protein-folding benchmarks',
+        quote: null,
+      },
+      {
+        takeaway: 'Routing instability remains the main blocker for production use',
+        quote:
+          'Routing collapse remains the one failure mode we cannot yet predict from training curves alone.',
+      },
     ],
     tags: ['research', 'scaling-laws', 'efficiency'],
     category: 'Artificial Intelligence',
@@ -43,9 +64,20 @@ export const mockCards: Card[] = [
     summary:
       'HBR profiles the post-2024 boom in fractional C-suite roles: seasoned operators splitting time across two or three scale-ups, what it does to founder trust, and how boards are rewriting comp to make it work.',
     keyPoints: [
-      'Fractional CMO and CFO postings tripled since 2024',
-      'Works best between Series A and C, before full-time depth is needed',
-      'Equity-light, milestone-based comp packages are becoming standard',
+      {
+        takeaway: 'Fractional CMO and CFO postings tripled since 2024',
+        quote:
+          'Listings for fractional CMO and CFO roles have tripled since early 2024, according to three of the largest executive marketplaces.',
+      },
+      {
+        takeaway: 'Works best between Series A and C, before full-time depth is needed',
+        quote:
+          'The sweet spot sits between Series A and Series C, when the problems are senior but the calendar is not yet full-time.',
+      },
+      {
+        takeaway: 'Equity-light, milestone-based comp packages are becoming standard',
+        quote: null,
+      },
     ],
     tags: ['leadership', 'hiring', 'scale-ups'],
     category: 'Startups',
@@ -58,9 +90,19 @@ export const mockCards: Card[] = [
     summary:
       'A look at the new cohort of solo, non-technical founders reaching meaningful revenue on agent-built software, why seed investors now screen for distribution instead of engineering, and where this approach still breaks.',
     keyPoints: [
-      'Dozens of agent-built products crossed $1M ARR with no engineering hires',
-      'Diligence is shifting from technical moats to distribution proof',
-      'Maintenance and security debt surface around the 18-month mark',
+      {
+        takeaway: 'Dozens of agent-built products crossed $1M ARR with no engineering hires',
+        quote:
+          'At least a few dozen agent-built products have crossed one million dollars in annual recurring revenue without a single engineering hire.',
+      },
+      {
+        takeaway: 'Diligence is shifting from technical moats to distribution proof',
+        quote: null,
+      },
+      {
+        takeaway: 'Maintenance and security debt surface around the 18-month mark',
+        quote: 'The bill for deferred maintenance tends to arrive around month eighteen.',
+      },
     ],
     tags: ['founders', 'no-code', 'venture'],
     category: 'Startups',
@@ -73,9 +115,20 @@ export const mockCards: Card[] = [
     summary:
       'New human imaging work in Nature confirms that slow-wave sleep drives glymphatic clearance of metabolic waste, and that even one shortened night measurably slows the process — strengthening the sleep-dementia link.',
     keyPoints: [
-      'First direct human imaging of glymphatic flow during slow-wave sleep',
-      'A single 4-hour night cut measured clearance by roughly 30%',
-      'Authors caution against supplements marketed on the back of the finding',
+      {
+        takeaway: 'First direct human imaging of glymphatic flow during slow-wave sleep',
+        quote:
+          'This is, to our knowledge, the first direct visualization of glymphatic transport in the sleeping human brain.',
+      },
+      {
+        takeaway: 'A single 4-hour night cut measured clearance by roughly 30%',
+        quote:
+          'After a single night restricted to four hours, measured clearance rates fell by roughly thirty percent.',
+      },
+      {
+        takeaway: 'Authors caution against supplements marketed on the back of the finding',
+        quote: null,
+      },
     ],
     tags: ['sleep', 'neuroscience', 'longevity'],
     category: 'Health',
@@ -88,9 +141,20 @@ export const mockCards: Card[] = [
     summary:
       'After three years of zone-2 evangelism, sports scientists push back: the aerobic-base benefits are real but plateau quickly for recreational athletes, and most people would gain more from two weekly high-intensity sessions.',
     keyPoints: [
-      'Zone 2 benefits plateau around 4-5 weekly hours for amateurs',
-      'Polarized plans beat pure zone-2 plans in 8 of 9 recent trials',
-      'Heart-rate-zone wearable accuracy remains a confounder in field studies',
+      {
+        takeaway: 'Zone 2 benefits plateau around 4-5 weekly hours for amateurs',
+        quote:
+          'For recreational athletes, the aerobic-base benefits of zone 2 plateau at around four to five hours per week.',
+      },
+      {
+        takeaway: 'Polarized plans beat pure zone-2 plans in 8 of 9 recent trials',
+        quote:
+          'In eight of the nine randomized trials we reviewed, polarized programs outperformed pure low-intensity volume.',
+      },
+      {
+        takeaway: 'Heart-rate-zone wearable accuracy remains a confounder in field studies',
+        quote: null,
+      },
     ],
     tags: ['fitness', 'endurance', 'training'],
     category: 'Health',
@@ -103,9 +167,20 @@ export const mockCards: Card[] = [
     summary:
       'The International Coaching Federation published its first formal guidance on using AI tools in coaching supervision: allowed for session preparation and pattern-spotting, but reflective practice and client confidentiality lines stay human-only.',
     keyPoints: [
-      'AI may support prep and theme analysis, not replace supervision dialogue',
-      'Client transcripts may not be fed to third-party models without consent',
-      'Credential renewals from 2027 will require an AI-ethics module',
+      {
+        takeaway: 'AI may support prep and theme analysis, not replace supervision dialogue',
+        quote:
+          'AI tools may inform preparation and surface patterns, but the reflective dialogue at the heart of supervision must remain between humans.',
+      },
+      {
+        takeaway: 'Client transcripts may not be fed to third-party models without consent',
+        quote:
+          'Client session material may not be shared with third-party models without explicit, revocable consent.',
+      },
+      {
+        takeaway: 'Credential renewals from 2027 will require an AI-ethics module',
+        quote: null,
+      },
     ],
     tags: ['coaching', 'ethics', 'icf'],
     category: 'Coaching',
