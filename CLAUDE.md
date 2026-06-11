@@ -74,7 +74,9 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/feature-012-frontend-real-api.md](docs/requirements/feature-012-frontend-real-api.md) — Feature 012 (issue #10)
 - [docs/requirements/feature-013-vercel-deploy.md](docs/requirements/feature-013-vercel-deploy.md) — Feature 013 (issue #11)
 - [docs/requirements/feature-014-eli5-digest.md](docs/requirements/feature-014-eli5-digest.md) — Feature 014 (issue #13)
+- [docs/requirements/feature-015-translate-card.md](docs/requirements/feature-015-translate-card.md) — Feature 015 (issue #14)
 - [docs/requirements/feature-016-tag-filtering.md](docs/requirements/feature-016-tag-filtering.md) — Feature 016 (issue #15)
+- [docs/requirements/feature-017-card-translate-ui.md](docs/requirements/feature-017-card-translate-ui.md) — Feature 017 (issue #16)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -85,22 +87,21 @@ App code lives under `app/` and never at the root. See ADR
 ## Current state
 
 MVP scoped (PRD/PLAN), stack via ADRs 002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter).
-**Frontend (features 002–007 012 016):** board UI (render-only components), tag-click
-filtering (`filterByTag`/`isSameTag`, active-filter bar in App), takeaway deep links
-(`takeawayHref` → `url#:~:text=…`), `KeyPoint {takeaway, quote|null}` type, real-API
-`lib/api.ts` (Vite proxy in dev; vitest keeps the mock). 83 vitest green.
-**Backend (features 004 008–011 014):** FastAPI serves `POST /api/digest {url, language}` —
-ELI5 digest (feature 014): simple-words explanation, `keyPoints = [{takeaway, quote|null}]`
-(quotes verified code-side against source text), canonical lowercase tags (≤4), language
-uk/ru/en (default uk; quotes stay original-language). Plus `GET /api/cards`,
-`DELETE /api/cards/{id}`, Postgres via `db.py`/`schema.sql`. 88 pytest green.
+**Frontend (features 002–007 012 016 017):** render-only board, tag-click filtering, takeaway
+deep links (`takeawayHref` → `url#:~:text=…`), per-card UA|RU|EN translate switcher
+(`translateCard`, single `translatingId` in App), `Card.language`, real-API `lib/api.ts`
+(Vite proxy in dev; vitest keeps the mock). 94 vitest green.
+**Backend (features 004 008–011 014 015):** `POST /api/digest {url, language}` — ELI5 digest:
+simple-words explanation, `keyPoints = [{takeaway, quote|null}]` (quotes verified code-side),
+canonical lowercase tags, language uk/ru/en (quotes stay original-language). `POST
+/api/cards/{id}/translate {language}` re-extracts + re-digests in place; cards carry
+`language` (column default 'uk'). Plus GET/DELETE cards, Postgres. 108 pytest green.
 **Deployed (feature 013, issue #11): https://content-digest.vercel.app** — public (owner's
 choice), Neon Postgres via Vercel integration (env vars are sensitive: values exist only inside
 deployments), OpenRouter funded → paid default model. Prod e2e green: digest → persist → list →
 delete. Deploys via `npx vercel deploy --prod` (GitHub auto-deploy not wired yet).
-**Wave B next (parallel):** #14 (translate endpoint + `language` column) ∥ #16 (per-card
-UA|RU|EN switcher; rebases on #15's Card/App). Then redeploy.
-**Backlog:** #12 wiring (normalize categories on save), rate limiting, GitHub auto-deploy.
+**Backlog:** #12 wiring (normalize categories on save), rate limiting, GitHub auto-deploy,
+shared `makeCard` spec factory (three fixture fan-outs in a row — retros 016/017).
 
 ## Dev server
 
@@ -167,8 +168,11 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
 - [014-eli5-digest](docs/retrospectives/014-eli5-digest.md) — verify model quotes against the
   full source, not the truncated prompt; normalize sloppy model output instead of rejecting.
 - [016-tag-filtering](docs/retrospectives/016-tag-filtering.md) — KeyPoint shape coordinated
-  with the parallel backend agent via the type alone; Card fixtures repeat across specs → a
-  makeCard factory is due next touch.
+  with the parallel backend agent via the type alone.
+- [015-translate-card](docs/retrospectives/015-translate-card.md) — `_COLUMNS` is the single
+  source of row-tuple order: change it, both mappers, and the roundtrip fixture together.
+- [017-card-translate-ui](docs/retrospectives/017-card-translate-ui.md) — disabled-button-as-
+  no-op keeps components render-only; extract a shared makeCard spec factory next touch.
 
 ## Escalation rules
 
