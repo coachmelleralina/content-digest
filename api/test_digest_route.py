@@ -29,7 +29,18 @@ DIGEST = Digest(
     category="Engineering",
 )
 URL = "https://example.com/some-article"
-EXPECTED_KEYS = {"id", "url", "title", "summary", "keyPoints", "tags", "category", "createdAt"}
+# feature 015: the saved/returned card includes "language"
+EXPECTED_KEYS = {
+    "id",
+    "url",
+    "title",
+    "summary",
+    "keyPoints",
+    "tags",
+    "category",
+    "language",
+    "createdAt",
+}
 
 
 @pytest.fixture
@@ -64,6 +75,7 @@ def test_happy_path_card_contents(happy_wiring: None) -> None:
     assert card["summary"] == DIGEST.summary
     assert card["tags"] == DIGEST.tags
     assert card["category"] == DIGEST.category
+    assert card["language"] == "uk"  # feature 015: request language saved on the card
 
 
 def test_key_points_map_to_camelcase_objects(happy_wiring: None) -> None:

@@ -18,6 +18,7 @@ CARD = {
     "keyPoints": ["one", "two"],
     "tags": ["x", "y"],
     "category": "Engineering",
+    "language": "uk",  # feature 015 (issue #14)
     "createdAt": "2026-06-11T10:00:00+00:00",
 }
 
@@ -31,11 +32,17 @@ def test_card_to_row_produces_db_ready_values() -> None:
     assert json.loads(row["key_points"]) == ["one", "two"]  # jsonb as JSON text
     assert json.loads(row["tags"]) == ["x", "y"]
     assert row["category"] == CARD["category"]
+    assert row["language"] == CARD["language"]  # feature 015
     assert row["created_at"] == CARD["createdAt"]
 
 
 def test_row_to_card_roundtrip() -> None:
-    """A DB row (as psycopg returns it) maps back to the exact camelCase card."""
+    """A DB row (as psycopg returns it) maps back to the exact camelCase card.
+
+    Feature 015: tuple order is id, url, title, summary, key_points, tags,
+    category, language, created_at — language sits between category and
+    created_at; created_at stays last.
+    """
     db_row = (
         uuid.UUID(CARD["id"]),
         CARD["url"],
@@ -44,6 +51,7 @@ def test_row_to_card_roundtrip() -> None:
         ["one", "two"],  # psycopg decodes jsonb to python lists
         ["x", "y"],
         CARD["category"],
+        CARD["language"],
         datetime(2026, 6, 11, 10, 0, 0, tzinfo=timezone.utc),
     )
     card = row_to_card(db_row)
