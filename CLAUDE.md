@@ -69,6 +69,7 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/feature-007-api-client.md](docs/requirements/feature-007-api-client.md) — Feature 007 (issue #4)
 - [docs/requirements/feature-008-extract.md](docs/requirements/feature-008-extract.md) — Feature 008 (issue #6)
 - [docs/requirements/feature-009-digest.md](docs/requirements/feature-009-digest.md) — Feature 009 (issue #7)
+- [docs/requirements/feature-010-digest-route.md](docs/requirements/feature-010-digest-route.md) — Feature 010 (issue #8)
 - [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
 - [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
 - [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
@@ -83,10 +84,11 @@ MVP scoped (PRD/PLAN), stack via ADRs 002–004 (FastAPI `api/` on Vercel, Postg
 category (`Board`/`Section`/`Card`, render-only), `UrlInput` + `validateUrl`, mock-backed
 `lib/api.ts` (`digestUrl`/`listCards`/`deleteCard` + `ApiError`) wired into `App.tsx` —
 end-to-end mock flow works in the browser. 64 vitest tests green.
-**Backend (features 004 008 009, issues #5 #6 #7):** FastAPI scaffold + `extract.py`
-(trafilatura, typed errors) + `digest.py` (OpenRouter, default `anthropic/claude-3.5-haiku`,
-strict JSON parsing). 29 pytest tests green. Not yet routed — `POST /api/digest` is issue #8.
-**Next:** #8 (route) → #9 (Postgres) → #10 (swap mock backend for fetch) → #11 (deploy).
+**Backend (features 004 008 009 010, issues #5–#8):** FastAPI serves `POST /api/digest` —
+extract (trafilatura, browser UA) → OpenRouter digest → camelCase card JSON; typed error
+mapping (502/422/500). 47 pytest tests green; live smoke test passed (free-model override
+`OPENROUTER_MODEL` in `api/.env` — the key is free-tier, paid default 402s without credits).
+**Next:** #9 (Postgres) → #10 (swap frontend mock backend for fetch) → #11 (deploy).
 
 ## Dev server
 
@@ -140,6 +142,8 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
   enforces "never a blank card".
 - [009-digest](docs/retrospectives/009-digest.md) — client-injection seam for httpx tests;
   snake_case `key_points` ↔ camelCase mapping deferred to the route layer (#8).
+- [010-digest-route](docs/retrospectives/010-digest-route.md) — smoke test caught two bugs unit
+  tests can't (UA 403, free-tier 402); browser UA now part of fetch_html's contract.
 
 ## Escalation rules
 
