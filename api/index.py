@@ -23,7 +23,15 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
-from db import DbError, apply_schema, delete_card, insert_card, list_cards
+from db import (
+    DbError,
+    apply_schema,
+    delete_card,
+    get_card,
+    insert_card,
+    list_cards,
+    update_card,
+)
 from digest import DigestApiError, DigestConfigError, DigestParseError, digest_text
 from extract import EmptyExtractionError, FetchError, NotHtmlError, extract_from_url
 
@@ -110,6 +118,8 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
         ],
         "tags": digest.tags,
         "category": digest.category,
+        # Feature 015: the digest language is saved on the card
+        "language": request.language,
         "createdAt": datetime.now(timezone.utc).isoformat(),
     }
     try:
@@ -125,6 +135,58 @@ def cards_route() -> list[dict[str, object]]:
         return list_cards()
     except DbError as error:
         raise HTTPException(status_code=500, detail=str(error))
+
+
+class TranslateRequest(BaseModel):
+    # Feature 015 (issue #14): target digest language; required, no default.
+    language: Literal["uk", "ru", "en"]
+
+
+@app.post("/api/cards/{card_id}/translate")
+def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, object]:
+    """Re-explain an existing card in another language (feature 015, issue #14).
+
+    Re-extracts the source URL, re-digests in the target language, and
+    overwrites the card's digest fields. id / url / createdAt never change.
+    """
+    try:
+        card = get_card(card_id)
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    if card is None:
+        raise HTTPException(status_code=404, detail="Card not found.")
+
+    try:
+        article = extract_from_url(str(card["url"]))
+    except FetchError as error:
+        raise HTTPException(status_code=502, detail=error.message)
+    except (NotHtmlError, EmptyExtractionError) as error:
+        raise HTTPException(status_code=422, detail=error.message)
+
+    try:
+        digest = digest_text(article.text, title=article.title, language=request.language)
+    except DigestConfigError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    except (DigestApiError, DigestParseError) as error:
+        raise HTTPException(status_code=502, detail=str(error))
+
+    updated: dict[str, object] = {
+        **card,
+        "title": article.title,
+        "summary": digest.summary,
+        "keyPoints": [
+            {"takeaway": point.takeaway, "quote": point.quote}
+            for point in digest.key_points
+        ],
+        "tags": digest.tags,
+        "category": digest.category,
+        "language": request.language,
+    }
+    try:
+        update_card(card_id, updated)
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    return updated
 
 
 @app.delete("/api/cards/{card_id}", status_code=204)

@@ -13,3 +13,6 @@ CREATE TABLE IF NOT EXISTS cards (
 );
 
 CREATE INDEX IF NOT EXISTS cards_created_at_idx ON cards (created_at DESC);
+
+-- Feature 015 (issue #14) — digest language per card; existing rows backfill to 'uk'.
+ALTER TABLE cards ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'uk';

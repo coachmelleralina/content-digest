@@ -50,14 +50,19 @@ def card_to_row(card: dict[str, Any]) -> dict[str, str]:
         "key_points": json.dumps(card["keyPoints"], ensure_ascii=False),
         "tags": json.dumps(card["tags"], ensure_ascii=False),
         "category": card["category"],
+        "language": card["language"],
         "created_at": card["createdAt"],
     }
 
 
 def row_to_card(row: Sequence[Any]) -> dict[str, Any]:
-    """DB row (id, url, title, summary, key_points, tags, category, created_at)
-    -> camelCase card dict. psycopg gives uuid.UUID / datetime / decoded jsonb."""
-    id_, url, title, summary, key_points, tags, category, created_at = row
+    """DB row -> camelCase card dict. psycopg gives uuid.UUID / datetime / decoded jsonb.
+
+    Tuple order (= _COLUMNS, feature 015): id, url, title, summary, key_points,
+    tags, category, language, created_at — language sits between category and
+    created_at; created_at stays last.
+    """
+    id_, url, title, summary, key_points, tags, category, language, created_at = row
     return {
         "id": str(id_) if isinstance(id_, uuid.UUID) else id_,
         "url": url,
@@ -66,6 +71,7 @@ def row_to_card(row: Sequence[Any]) -> dict[str, Any]:
         "keyPoints": key_points,
         "tags": tags,
         "category": category,
+        "language": language,
         "createdAt": created_at.isoformat()
         if isinstance(created_at, datetime)
         else created_at,
@@ -74,7 +80,7 @@ def row_to_card(row: Sequence[Any]) -> dict[str, Any]:
 
 # --- queries ---------------------------------------------------------------------
 
-_COLUMNS = "id, url, title, summary, key_points, tags, category, created_at"
+_COLUMNS = "id, url, title, summary, key_points, tags, category, language, created_at"
 
 
 def _connect() -> psycopg.Connection:
@@ -93,7 +99,40 @@ def insert_card(card: dict[str, Any]) -> None:
             conn.execute(
                 f"INSERT INTO cards ({_COLUMNS}) "
                 "VALUES (%(id)s, %(url)s, %(title)s, %(summary)s, "
-                "%(key_points)s::jsonb, %(tags)s::jsonb, %(category)s, %(created_at)s)",
+                "%(key_points)s::jsonb, %(tags)s::jsonb, %(category)s, "
+                "%(language)s, %(created_at)s)",
+                row,
+            )
+    except psycopg.Error as exc:
+        raise DbError(_USER_MESSAGE) from exc
+
+
+def get_card(card_id: str) -> dict[str, Any] | None:
+    """Fetch one card by id; None when it does not exist (feature 015)."""
+    try:
+        with _connect() as conn:
+            row = conn.execute(
+                f"SELECT {_COLUMNS} FROM cards WHERE id = %s", (card_id,)
+            ).fetchone()
+    except psycopg.Error as exc:
+        raise DbError(_USER_MESSAGE) from exc
+    return row_to_card(row) if row is not None else None
+
+
+def update_card(card_id: str, card: dict[str, Any]) -> None:
+    """Overwrite the digest fields of an existing card (feature 015).
+
+    Updates title, summary, key_points, tags, category, language;
+    id / url / created_at are never touched.
+    """
+    row = card_to_row({**card, "id": card_id})
+    try:
+        with _connect() as conn:
+            conn.execute(
+                "UPDATE cards SET title = %(title)s, summary = %(summary)s, "
+                "key_points = %(key_points)s::jsonb, tags = %(tags)s::jsonb, "
+                "category = %(category)s, language = %(language)s "
+                "WHERE id = %(id)s",
                 row,
             )
     except psycopg.Error as exc:
