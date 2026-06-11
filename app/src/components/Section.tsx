@@ -11,12 +11,18 @@ const heading: CSSProperties = {
   textAlign: 'left',
 };
 
-export function Section({ section }: { section: SectionModel }) {
+export function Section({
+  section,
+  onDelete,
+}: {
+  section: SectionModel;
+  onDelete: (id: string) => void;
+}) {
   return (
     <section>
       <h2 style={heading}>{section.category}</h2>
       {section.cards.map((card) => (
-        <Card key={card.id} card={card} />
+        <Card key={card.id} card={card} onDelete={onDelete} />
       ))}
     </section>
   );

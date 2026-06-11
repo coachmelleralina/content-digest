@@ -60,14 +60,37 @@ const tagChip: CSSProperties = {
   padding: '0.1rem 0.55rem',
 };
 
-export function Card({ card }: { card: CardModel }) {
+const deleteButton: CSSProperties = {
+  fontSize: '0.75rem',
+  border: '1px solid var(--border, #ddd)',
+  background: 'transparent',
+  borderRadius: '6px',
+  padding: '0.1rem 0.5rem',
+  cursor: 'pointer',
+  opacity: 0.6,
+  marginLeft: '0.5rem',
+  whiteSpace: 'nowrap',
+};
+
+export function Card({
+  card,
+  onDelete,
+}: {
+  card: CardModel;
+  onDelete: (id: string) => void;
+}) {
   return (
     <article style={box}>
       <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <a href={card.url} target="_blank" rel="noopener noreferrer" style={titleLink}>
           {card.title}
         </a>
-        <span style={badge}>{card.category}</span>
+        <span style={{ display: 'flex', alignItems: 'baseline' }}>
+          <span style={badge}>{card.category}</span>
+          <button type="button" style={deleteButton} onClick={() => onDelete(card.id)}>
+            ✕
+          </button>
+        </span>
       </header>
       <p style={summaryText}>{card.summary}</p>
       <ul style={pointsList}>

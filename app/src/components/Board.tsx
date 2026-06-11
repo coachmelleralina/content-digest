@@ -20,14 +20,22 @@ const emptyState: CSSProperties = {
   opacity: 0.7,
 };
 
-export function Board({ cards }: { cards: CardModel[] }) {
+export function Board({
+  cards,
+  onDelete,
+}: {
+  cards: CardModel[];
+  onDelete: (id: string) => void;
+}) {
   const sections = groupByCategory(cards);
   return (
     <div style={container}>
       {sections.length === 0 ? (
         <p style={emptyState}>paste a link to start</p>
       ) : (
-        sections.map((section) => <Section key={section.category} section={section} />)
+        sections.map((section) => (
+          <Section key={section.category} section={section} onDelete={onDelete} />
+        ))
       )}
     </div>
   );
