@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { greeting } from './greeting';
 import { Board } from './components/Board';
-import { cardElementId } from './components/Card';
+import { cardElementId } from './lib/cardDom';
 import UrlInput from './components/UrlInput';
 import { deleteCard, digestUrl, findSimilar, listCards, translateCard } from './lib/api';
 import { filterByTag, isSameTag } from './lib/filterByTag';

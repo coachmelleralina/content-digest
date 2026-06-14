@@ -8,9 +8,7 @@ import type { Card as CardModel, SimilarUiProps } from '../types';
 import { isSameTag } from '../lib/filterByTag';
 import { takeawayHref } from '../lib/fragmentUrl';
 import { SUPPORTED_LANGUAGES, languageLabel, type Language } from '../lib/languages';
-
-// DOM id for a card's article element, so "similar" results can scroll to it.
-export const cardElementId = (id: string): string => `card-${id}`;
+import { cardElementId } from '../lib/cardDom';
 
 const box: CSSProperties = {
   border: '1px solid var(--border, #ddd)',
