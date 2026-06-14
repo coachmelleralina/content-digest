@@ -30,13 +30,21 @@ from digest import (
 _LANGUAGE_NAMES = {"uk": "Ukrainian", "ru": "Russian", "en": "English"}
 MAX_RESULTS = 3
 _SUMMARY_BUDGET = 280  # trim each card's summary to bound prompt size/cost
-_CODE_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*\n?(.*?)\n?```\s*$", re.DOTALL)
+_FENCE_BLOCK_RE = re.compile(r"```[a-zA-Z0-9_-]*\s*\n?(.*?)```", re.DOTALL)
+_JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def _strip_code_fences(content: str) -> str:
-    """Drop a surrounding ```json fence — models wrap strict JSON despite asking not to."""
-    match = _CODE_FENCE_RE.match(content.strip())
-    return match.group(1) if match else content.strip()
+def _extract_json_object(content: str) -> str:
+    """Pull the JSON object out of model output. Models ignore "JSON only": they
+    wrap it in ```json fences AND append a prose explanation after the fence
+    (both seen live with haiku-4.5). Prefer a fenced block, then narrow to the
+    outermost {...} so trailing/leading prose can't break parsing."""
+    text = content.strip()
+    fence = _FENCE_BLOCK_RE.search(text)
+    if fence is not None:
+        text = fence.group(1)
+    obj = _JSON_OBJECT_RE.search(text)
+    return obj.group(0) if obj is not None else text.strip()
 
 
 class SimilarError(Exception):
@@ -89,12 +97,15 @@ def build_similar_prompt(
         )
     lang_name = _LANGUAGE_NAMES[language]
     system = (
-        "You help a reader find which of their saved article cards are most related to a "
-        "target card, by topic and meaning. Respond with STRICT JSON only — a single object "
-        'with one key "similar": an array of at most 3 objects, each with exactly two keys: '
-        '"id" (the id of a candidate card, copied verbatim) and "reason" (one short sentence '
-        f"in {lang_name} saying why it is related). Order from most to least related. Use ONLY "
-        "ids from the provided candidates. If none are genuinely related, return an empty array."
+        "You help a reader find which of their saved article cards are related to a target "
+        "card. Relate them generously — by topic, domain, theme, or shared subject, even "
+        "loosely; two cards about the same general area count as related. Only return an empty "
+        "array if a candidate truly shares nothing with the target.\n"
+        "Output ONLY a single JSON object, with NO prose, NO explanation, and NO markdown "
+        'fences before or after it. The object has one key "similar": an array of at most 3 '
+        'objects, each with exactly two keys: "id" (a candidate id, copied verbatim) and '
+        f'"reason" (one short sentence in {lang_name} saying why it is related). Order from '
+        "most to least related. Use ONLY ids from the provided candidates."
     )
     candidates = [
         {"id": c["id"], "title": c["title"], "summary": _trim(c["summary"]), "tags": c["tags"]}
@@ -175,7 +186,7 @@ def find_similar(
         ) from exc
 
     try:
-        parsed = _SimilarResponse.model_validate_json(_strip_code_fences(content))
+        parsed = _SimilarResponse.model_validate_json(_extract_json_object(content))
     except ValidationError as exc:
         raise SimilarParseError(
             "The AI returned an unreadable list of related cards. Please try again."

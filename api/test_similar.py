@@ -111,6 +111,21 @@ def test_tolerates_markdown_code_fences(monkeypatch: pytest.MonkeyPatch) -> None
     assert [r.id for r in refs] == ["c-1"]
 
 
+def test_tolerates_trailing_prose_after_fence(monkeypatch: pytest.MonkeyPatch) -> None:
+    """haiku-4.5 appends an explanation AFTER the ```json fence — found live in prod."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    content = (
+        '```json\n{\n  "similar": [{"id": "c-1", "reason": "ok"}]\n}\n```\n\n'
+        "These two cards share the productivity theme, so they are related."
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+    refs = find_similar(TARGET, OTHERS, client=_client(handler))
+    assert [r.id for r in refs] == ["c-1"]
+
+
 # --- prompt -------------------------------------------------------------------
 
 
