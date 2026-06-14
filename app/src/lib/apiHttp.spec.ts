@@ -126,4 +126,29 @@ describe('createHttpBackend', () => {
       status: undefined,
     });
   });
+
+  it('findSimilar POSTs /api/cards/{id}/similar and returns the refs', async () => {
+    const refs = [{ id: 'b', reason: 'related' }];
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, refs));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await createHttpBackend().findSimilar(CARD.id);
+
+    expect(result).toEqual(refs);
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(path).toBe(`/api/cards/${CARD.id}/similar`);
+    expect(init.method).toBe('POST');
+  });
+
+  it('findSimilar maps a {detail} error to ApiError with status', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse(404, { detail: 'Card not found.' })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createHttpBackend().findSimilar('missing')).rejects.toMatchObject({
+      message: 'Card not found.',
+      status: 404,
+    });
+  });
 });

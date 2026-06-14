@@ -35,6 +35,12 @@ from db import (
 )
 from digest import DigestApiError, DigestConfigError, DigestParseError, digest_text
 from extract import EmptyExtractionError, FetchError, NotHtmlError, extract_from_url
+from similar import (
+    SimilarApiError,
+    SimilarConfigError,
+    SimilarParseError,
+    find_similar,
+)
 
 
 def _load_dotenv() -> None:
@@ -196,6 +202,34 @@ def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, o
     except DbError as error:
         raise HTTPException(status_code=500, detail=str(error))
     return updated
+
+
+@app.post("/api/cards/{card_id}/similar")
+def similar_route(card_id: str) -> list[dict[str, str]]:
+    """Find related cards already on the board, ranked by meaning (feature 019).
+
+    Returns 0–3 `{id, reason}` refs (ids that exist on the board). The reason
+    language follows the target card. No AI call when the board has no other cards.
+    """
+    try:
+        target = get_card(card_id)
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    if target is None:
+        raise HTTPException(status_code=404, detail="Card not found.")
+
+    try:
+        others = [c for c in list_cards() if c["id"] != card_id]
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+    try:
+        refs = find_similar(target, others, language=str(target["language"]))
+    except SimilarConfigError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+    except (SimilarApiError, SimilarParseError) as error:
+        raise HTTPException(status_code=502, detail=str(error))
+    return [{"id": ref.id, "reason": ref.reason} for ref in refs]
 
 
 @app.delete("/api/cards/{card_id}", status_code=204)

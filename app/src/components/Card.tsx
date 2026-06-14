@@ -4,10 +4,11 @@
 // in lib/fragmentUrl, languages in lib/languages.
 
 import type { CSSProperties } from 'react';
-import type { Card as CardModel } from '../types';
+import type { Card as CardModel, SimilarUiProps } from '../types';
 import { isSameTag } from '../lib/filterByTag';
 import { takeawayHref } from '../lib/fragmentUrl';
 import { SUPPORTED_LANGUAGES, languageLabel, type Language } from '../lib/languages';
+import { cardElementId } from '../lib/cardDom';
 
 const box: CSSProperties = {
   border: '1px solid var(--border, #ddd)',
@@ -132,6 +133,44 @@ const deleteButton: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// Feature 019: "Похожие" button + inline results list.
+const similarButton: CSSProperties = {
+  fontSize: '0.75rem',
+  fontFamily: 'inherit',
+  color: 'inherit',
+  border: '1px solid var(--border, #ddd)',
+  background: 'transparent',
+  borderRadius: '6px',
+  padding: '0.1rem 0.5rem',
+  cursor: 'pointer',
+  marginLeft: '0.5rem',
+  whiteSpace: 'nowrap',
+};
+
+const similarBlock: CSSProperties = {
+  marginTop: '0.75rem',
+  paddingTop: '0.6rem',
+  borderTop: '1px dashed var(--border, #ddd)',
+  fontSize: '0.82rem',
+};
+
+const similarItem: CSSProperties = {
+  display: 'block',
+  width: '100%',
+  textAlign: 'left',
+  fontFamily: 'inherit',
+  fontSize: 'inherit',
+  color: 'inherit',
+  background: 'transparent',
+  border: 'none',
+  borderRadius: '6px',
+  padding: '0.2rem 0.3rem',
+  cursor: 'pointer',
+};
+
+const similarReason: CSSProperties = { opacity: 0.7 };
+const similarEmpty: CSSProperties = { fontStyle: 'italic', opacity: 0.7 };
+
 export function Card({
   card,
   onDelete,
@@ -139,6 +178,7 @@ export function Card({
   activeTag,
   onTranslate,
   translatingId,
+  similar,
 }: {
   card: CardModel;
   onDelete: (id: string) => void;
@@ -146,10 +186,18 @@ export function Card({
   activeTag: string | null;
   onTranslate: (id: string, language: Language) => void;
   translatingId: string | null;
+  similar: SimilarUiProps;
 }) {
   const isTranslating = translatingId === card.id;
+  // Feature 019: this card's slice of the bundled similar-materials state.
+  const similarResults = similar.resultsByCard[card.id] ?? null;
+  const findingSimilar = similar.findingId === card.id;
+  const highlighted = similar.highlightedId === card.id;
+  const boxStyle = highlighted
+    ? { ...box, outline: '2px solid var(--accent, #6b21a8)', outlineOffset: '2px' }
+    : box;
   return (
-    <article style={box}>
+    <article id={cardElementId(card.id)} style={boxStyle}>
       <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <a href={card.url} target="_blank" rel="noopener noreferrer" style={titleLink}>
           {card.title}
@@ -173,6 +221,15 @@ export function Card({
             ))}
             {isTranslating && <span style={langBusyHint}>…</span>}
           </span>
+          <button
+            type="button"
+            style={similarButton}
+            disabled={similar.disabled || findingSimilar}
+            title={similar.disabled ? 'Пока не с чем сравнивать' : undefined}
+            onClick={() => similar.onFind(card.id)}
+          >
+            {findingSimilar ? 'Похожие…' : 'Похожие'}
+          </button>
           <button type="button" style={deleteButton} onClick={() => onDelete(card.id)}>
             ✕
           </button>
@@ -207,6 +264,24 @@ export function Card({
           </button>
         ))}
       </div>
+      {similarResults !== null && (
+        <div style={similarBlock}>
+          {similarResults.length === 0 ? (
+            <span style={similarEmpty}>На доске пока нет похожих материалов</span>
+          ) : (
+            similarResults.map((match) => (
+              <button
+                type="button"
+                key={match.id}
+                style={similarItem}
+                onClick={() => similar.onGoTo(match.id)}
+              >
+                → {match.title} <span style={similarReason}>— {match.reason}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </article>
   );
 }

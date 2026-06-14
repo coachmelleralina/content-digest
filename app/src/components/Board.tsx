@@ -4,7 +4,7 @@
 // directly by that module's output. Tag filtering happens upstream in App.
 
 import type { CSSProperties } from 'react';
-import type { Card as CardModel } from '../types';
+import type { Card as CardModel, SimilarUiProps } from '../types';
 import type { Language } from '../lib/languages';
 import { groupByCategory } from '../lib/groupByCategory';
 import { Section } from './Section';
@@ -28,6 +28,7 @@ export function Board({
   activeTag,
   onTranslate,
   translatingId,
+  similar,
 }: {
   cards: CardModel[];
   onDelete: (id: string) => void;
@@ -35,6 +36,7 @@ export function Board({
   activeTag: string | null;
   onTranslate: (id: string, language: Language) => void;
   translatingId: string | null;
+  similar: SimilarUiProps;
 }) {
   const sections = groupByCategory(cards);
   return (
@@ -51,6 +53,7 @@ export function Board({
             activeTag={activeTag}
             onTranslate={onTranslate}
             translatingId={translatingId}
+            similar={similar}
           />
         ))
       )}

@@ -6,7 +6,7 @@
 // mock for a fetch-based Backend — one internal layer, same exported
 // signatures, zero component changes.
 
-import type { Card } from '../types';
+import type { Card, SimilarRef } from '../types';
 import { mockCards } from '../mocks/cards';
 import { resolveCategory } from './categories';
 import { ApiError } from './apiError';
@@ -19,6 +19,7 @@ interface Backend {
   listCards(): Promise<Card[]>;
   deleteCard(id: string): Promise<void>;
   translateCard(id: string, language: Language): Promise<Card>;
+  findSimilar(id: string): Promise<SimilarRef[]>;
 }
 
 const DIGEST_LATENCY_MS = 300;
@@ -115,6 +116,20 @@ const createMockBackend = (): Backend => {
       cards = cards.map((c) => (c.id === id ? translated : c));
       return structuredClone(translated);
     },
+
+    // Feature 019: stand-in for the similarity endpoint — returns up to 3 other
+    // cards with a canned reason (the real backend ranks by meaning via AI).
+    async findSimilar(id: string): Promise<SimilarRef[]> {
+      await delay(DIGEST_LATENCY_MS);
+      const target = cards.find((c) => c.id === id);
+      if (target === undefined) {
+        throw new ApiError('Card not found', 404);
+      }
+      return cards
+        .filter((c) => c.id !== id)
+        .slice(0, 3)
+        .map((c) => ({ id: c.id, reason: `Похоже по теме «${target.category}»` }));
+    },
   };
 };
 
@@ -181,6 +196,11 @@ export const createHttpBackend = (): Backend => ({
     });
     return (await response.json()) as Card;
   },
+
+  async findSimilar(id: string): Promise<SimilarRef[]> {
+    const response = await request(`/api/cards/${id}/similar`, { method: 'POST' });
+    return (await response.json()) as SimilarRef[];
+  },
 });
 
 // The one switchable layer: vitest keeps the mock (MODE === 'test'); dev and
@@ -202,6 +222,12 @@ export const deleteCard = (id: string): Promise<void> => backend.deleteCard(id);
  */
 export const translateCard = (id: string, language: Language): Promise<Card> =>
   backend.translateCard(id, language);
+
+/**
+ * POST /api/cards/{id}/similar → up to 3 related cards already on the board
+ * (feature 019), each `{id, reason}`. Rejects with ApiError (404 unknown id).
+ */
+export const findSimilar = (id: string): Promise<SimilarRef[]> => backend.findSimilar(id);
 
 /** Test-only: reseed the mock store. Deleted with the mock backend in issue #10. */
 export const resetApiMock = (): void => {
