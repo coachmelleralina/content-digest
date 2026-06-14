@@ -51,6 +51,10 @@ App code lives under `app/` and never at the root. See ADR
 11. **Conventional Commits.** Format: `<type>(<scope>): <subject>`. Types: `feat`, `fix`,
     `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`. Retros are committed
     as `chore(retro): NNN-<slug>`. ADR additions as `docs(adr): NNN-<slug>`.
+11b. **Pull-Request flow (ADR 005).** Never merge to `main` locally. Each task/agent: branch →
+    push → open a PR against `main` → wait for the green `frontend` + `backend` CI checks →
+    squash-merge → delete the branch. `main` is protected (PR required, checks must pass). See
+    [ADR 005](docs/decisions/005-github-flow-ci-branch-protection.md).
 12. **CLAUDE.md ≤ ~200 lines.** It is a router, not an encyclopedia. If a retro update would
     push it past ~200 lines, move detail into a linked file under `docs/` and link from here
     instead. Same applies to `constraints.md` — split into topical files once over ~150 lines.
