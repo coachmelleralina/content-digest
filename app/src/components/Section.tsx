@@ -2,7 +2,7 @@
 // One board section: category heading + its cards, in the order given.
 
 import type { CSSProperties } from 'react';
-import type { Section as SectionModel } from '../types';
+import type { Section as SectionModel, SimilarUiProps } from '../types';
 import type { Language } from '../lib/languages';
 import { Card } from './Card';
 
@@ -19,6 +19,7 @@ export function Section({
   activeTag,
   onTranslate,
   translatingId,
+  similar,
 }: {
   section: SectionModel;
   onDelete: (id: string) => void;
@@ -26,6 +27,7 @@ export function Section({
   activeTag: string | null;
   onTranslate: (id: string, language: Language) => void;
   translatingId: string | null;
+  similar: SimilarUiProps;
 }) {
   return (
     <section>
@@ -39,6 +41,7 @@ export function Section({
           activeTag={activeTag}
           onTranslate={onTranslate}
           translatingId={translatingId}
+          similar={similar}
         />
       ))}
     </section>

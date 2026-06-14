@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { Card } from '../types';
+import type { Card, SimilarRef } from '../types';
 import { mockCards } from '../mocks/cards';
 import { resolveCategory } from './categories';
 import { ApiError } from './apiError';
-import { digestUrl, listCards, deleteCard, translateCard, resetApiMock } from './api';
+import {
+  digestUrl,
+  listCards,
+  deleteCard,
+  translateCard,
+  findSimilar,
+  resetApiMock,
+} from './api';
 import type { Language } from './languages';
 
 // The exact key set of the Card type (feature 003; feature 017 adds
@@ -177,6 +184,22 @@ describe('translateCard (feature 017, issue #16)', () => {
   });
 });
 
+describe('findSimilar', () => {
+  it('returns up to 3 other cards as {id, reason} refs', async () => {
+    const target = mockCards[0]!;
+    const refs = await findSimilar(target.id);
+    expect(refs.length).toBeLessThanOrEqual(3);
+    expect(refs.every((r) => r.id !== target.id)).toBe(true);
+    expect(refs.every((r) => typeof r.reason === 'string' && r.reason.length > 0)).toBe(true);
+    const ids = new Set(mockCards.map((c) => c.id));
+    expect(refs.every((r) => ids.has(r.id))).toBe(true);
+  });
+
+  it('rejects with ApiError 404 for an unknown id', async () => {
+    await expectApiError(findSimilar('no-such-id'), 'Card not found', 404);
+  });
+});
+
 describe('resetApiMock', () => {
   it('reseeds the store to the original mock cards', async () => {
     await deleteCard(mockCards[0]!.id);
@@ -190,7 +213,9 @@ const _digest: (url: string) => Promise<Card> = digestUrl;
 const _list: () => Promise<Card[]> = listCards;
 const _del: (id: string) => Promise<void> = deleteCard;
 const _translate: (id: string, language: Language) => Promise<Card> = translateCard;
+const _similar: (id: string) => Promise<SimilarRef[]> = findSimilar;
 void _digest;
 void _list;
 void _del;
 void _translate;
+void _similar;

@@ -1,12 +1,16 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { greeting } from './greeting';
 import { Board } from './components/Board';
+import { cardElementId } from './components/Card';
 import UrlInput from './components/UrlInput';
-import { deleteCard, digestUrl, listCards, translateCard } from './lib/api';
+import { deleteCard, digestUrl, findSimilar, listCards, translateCard } from './lib/api';
 import { filterByTag, isSameTag } from './lib/filterByTag';
+import { resolveSimilar } from './lib/resolveSimilar';
 import type { Language } from './lib/languages';
 import { toErrorMessage } from './lib/validateUrl';
-import type { Card } from './types';
+import type { Card, SimilarMatch } from './types';
+
+const HIGHLIGHT_MS = 1600;
 
 const filterBar: CSSProperties = {
   display: 'inline-flex',
@@ -36,6 +40,11 @@ export default function App() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   // Feature 017: id of the card currently being translated (one at a time).
   const [translatingId, setTranslatingId] = useState<string | null>(null);
+  // Feature 019: similar-materials results per card (null = not shown), which
+  // card is searching, and which card is briefly highlighted after a jump.
+  const [similarByCard, setSimilarByCard] = useState<Record<string, SimilarMatch[] | null>>({});
+  const [findingSimilarId, setFindingSimilarId] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   useEffect(() => {
     listCards()
@@ -72,7 +81,41 @@ export default function App() {
     setActiveTag((prev) => (isSameTag(tag, prev) ? null : tag));
   };
 
+  // Feature 019: clicking "Похожие" toggles the result list for that card.
+  const handleFindSimilar = (id: string) => {
+    if (similarByCard[id] !== undefined && similarByCard[id] !== null) {
+      setSimilarByCard((prev) => ({ ...prev, [id]: null })); // collapse if open
+      return;
+    }
+    setFindingSimilarId(id);
+    findSimilar(id)
+      .then((refs) =>
+        setSimilarByCard((prev) => ({ ...prev, [id]: resolveSimilar(refs, cards) })),
+      )
+      .catch((error: unknown) => setBoardError(toErrorMessage(error)))
+      .finally(() => setFindingSimilarId(null));
+  };
+
+  // Jump to a related card: scroll it into view and highlight it briefly.
+  const handleGoToCard = (id: string) => {
+    document.getElementById(cardElementId(id))?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+    setHighlightedId(id);
+    window.setTimeout(() => setHighlightedId((cur) => (cur === id ? null : cur)), HIGHLIGHT_MS);
+  };
+
   const visibleCards = filterByTag(cards, activeTag);
+
+  const similarUi = {
+    resultsByCard: similarByCard,
+    findingId: findingSimilarId,
+    highlightedId,
+    disabled: cards.length < 2,
+    onFind: handleFindSimilar,
+    onGoTo: handleGoToCard,
+  };
 
   return (
     <main style={{ fontFamily: 'system-ui', padding: '2rem 0' }}>
@@ -107,6 +150,7 @@ export default function App() {
           activeTag={activeTag}
           onTranslate={handleTranslate}
           translatingId={translatingId}
+          similar={similarUi}
         />
       )}
     </main>
