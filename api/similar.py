@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -29,6 +30,13 @@ from digest import (
 _LANGUAGE_NAMES = {"uk": "Ukrainian", "ru": "Russian", "en": "English"}
 MAX_RESULTS = 3
 _SUMMARY_BUDGET = 280  # trim each card's summary to bound prompt size/cost
+_CODE_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*\s*\n?(.*?)\n?```\s*$", re.DOTALL)
+
+
+def _strip_code_fences(content: str) -> str:
+    """Drop a surrounding ```json fence — models wrap strict JSON despite asking not to."""
+    match = _CODE_FENCE_RE.match(content.strip())
+    return match.group(1) if match else content.strip()
 
 
 class SimilarError(Exception):
@@ -167,7 +175,7 @@ def find_similar(
         ) from exc
 
     try:
-        parsed = _SimilarResponse.model_validate_json(content)
+        parsed = _SimilarResponse.model_validate_json(_strip_code_fences(content))
     except ValidationError as exc:
         raise SimilarParseError(
             "The AI returned an unreadable list of related cards. Please try again."
