@@ -64,42 +64,27 @@ App code lives under `app/` and never at the root. See ADR
 - [docs/requirements/overview.md](docs/requirements/overview.md) — goal, user, success criteria
 - [docs/PRD.md](docs/PRD.md) — product requirements (problem, scope, MVP success criteria)
 - [docs/PLAN.md](docs/PLAN.md) — MVP build plan (stack, folder structure, build steps)
-- [docs/requirements/feature-001-hello-world.md](docs/requirements/feature-001-hello-world.md) — Feature 001
-- [docs/requirements/feature-002-category-normalization.md](docs/requirements/feature-002-category-normalization.md) — Feature 002 (issue #12)
-- [docs/requirements/feature-003-card-model.md](docs/requirements/feature-003-card-model.md) — Feature 003 (issue #1)
-- [docs/requirements/feature-004-api-scaffold.md](docs/requirements/feature-004-api-scaffold.md) — Feature 004 (issue #5)
-- [docs/requirements/feature-005-board-ui.md](docs/requirements/feature-005-board-ui.md) — Feature 005 (issue #2)
-- [docs/requirements/feature-006-url-input.md](docs/requirements/feature-006-url-input.md) — Feature 006 (issue #3)
-- [docs/requirements/feature-007-api-client.md](docs/requirements/feature-007-api-client.md) — Feature 007 (issue #4)
-- [docs/requirements/feature-008-extract.md](docs/requirements/feature-008-extract.md) — Feature 008 (issue #6)
-- [docs/requirements/feature-009-digest.md](docs/requirements/feature-009-digest.md) — Feature 009 (issue #7)
-- [docs/requirements/feature-010-digest-route.md](docs/requirements/feature-010-digest-route.md) — Feature 010 (issue #8)
-- [docs/requirements/feature-011-cards-persistence.md](docs/requirements/feature-011-cards-persistence.md) — Feature 011 (issue #9)
-- [docs/requirements/feature-012-frontend-real-api.md](docs/requirements/feature-012-frontend-real-api.md) — Feature 012 (issue #10)
-- [docs/requirements/feature-013-vercel-deploy.md](docs/requirements/feature-013-vercel-deploy.md) — Feature 013 (issue #11)
-- [docs/requirements/feature-014-eli5-digest.md](docs/requirements/feature-014-eli5-digest.md) — Feature 014 (issue #13)
-- [docs/requirements/feature-015-translate-card.md](docs/requirements/feature-015-translate-card.md) — Feature 015 (issue #14)
-- [docs/requirements/feature-016-tag-filtering.md](docs/requirements/feature-016-tag-filtering.md) — Feature 016 (issue #15)
-- [docs/requirements/feature-017-card-translate-ui.md](docs/requirements/feature-017-card-translate-ui.md) — Feature 017 (issue #16)
-- [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — ADR: root-vs-`app/` split
-- [docs/decisions/002-backend-api-on-vercel.md](docs/decisions/002-backend-api-on-vercel.md) — ADR: `api/` backend on Vercel
-- [docs/decisions/003-postgres-storage.md](docs/decisions/003-postgres-storage.md) — ADR: Postgres storage
-- [docs/decisions/004-openrouter-ai.md](docs/decisions/004-openrouter-ai.md) — ADR: OpenRouter AI digest
+- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) — prioritized hardening/refactor backlog (post-v2)
+- [docs/requirements/](docs/requirements/) — one `feature-NNN-*.md` per feature (001–019)
+- [docs/decisions/](docs/decisions/) — ADRs: 001 root-vs-`app/`, 002 Vercel backend, 003
+  Postgres, 004 OpenRouter, 005 GitHub Flow + CI + branch protection
 - [docs/constraints.md](docs/constraints.md) — what NOT to do
 - [docs/retrospectives/](docs/retrospectives/) — retrospectives (see Self-improvement log)
 
 ## Current state
 
 MVP scoped (PRD/PLAN), stack via ADRs 002–004 (FastAPI `api/` on Vercel, Postgres, OpenRouter).
-**Frontend (features 002–007 012 016 017):** render-only board, tag-click filtering, takeaway
-deep links (`takeawayHref` → `url#:~:text=…`), per-card UA|RU|EN translate switcher
-(`translateCard`, single `translatingId` in App), `Card.language`, real-API `lib/api.ts`
-(Vite proxy in dev; vitest keeps the mock). 94 vitest green.
-**Backend (features 004 008–011 014 015):** `POST /api/digest {url, language}` — ELI5 digest:
-simple-words explanation, `keyPoints = [{takeaway, quote|null}]` (quotes verified code-side),
-canonical lowercase tags, language uk/ru/en (quotes stay original-language). `POST
-/api/cards/{id}/translate {language}` re-extracts + re-digests in place; cards carry
-`language` (column default 'uk'). Plus GET/DELETE cards, Postgres. 108 pytest green.
+**Frontend (features 002–007 012 016 017 019):** render-only board, tag-click filtering,
+takeaway deep links, per-card UA|RU|EN translate switcher, and a per-card "Похожие" button
+(feature 019: `findSimilar` → `resolveSimilar` → inline list; click scrolls + highlights the
+target card; bundled `SimilarUiProps`). Real-API `lib/api.ts` (Vite proxy in dev; vitest keeps
+the mock). 103 vitest green.
+**Backend (features 004 008–011 014 015 019):** `POST /api/digest {url, language}` — ELI5
+digest: simple-words explanation, `keyPoints = [{takeaway, quote|null}]` (quotes verified
+code-side), canonical lowercase tags, language uk/ru/en. `POST /api/cards/{id}/translate
+{language}` re-extracts + re-digests in place. `POST /api/cards/{id}/similar` ranks other board
+cards by meaning (`similar.py`, one OpenRouter call, ids filtered to the board). Plus GET/DELETE
+cards, Postgres. 128 pytest green.
 **Deployed (feature 013, issue #11): https://content-digest.vercel.app** — public (owner's
 choice), Neon Postgres via Vercel integration (env vars are sensitive: values exist only inside
 deployments), OpenRouter funded → paid default model. Prod e2e green: digest → persist → list →
@@ -180,6 +165,9 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
 - [018-live-bugfixes](docs/retrospectives/018-live-bugfixes.md) — OpenRouter routed Vercel
   egress to a 20×-slower provider (fix: provider sort=latency + haiku-4.5 → 177s→9s); dashes
   and bullet markers silently broke text-fragment links.
+- [019-similar-materials](docs/retrospectives/019-similar-materials.md) — bundled per-card props
+  into one object to keep components render-only; a shared `openrouter.py` helper is the next
+  step now that two callers duplicate the call skeleton.
 
 ## Escalation rules
 
