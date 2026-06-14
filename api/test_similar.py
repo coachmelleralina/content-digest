@@ -99,6 +99,18 @@ def test_empty_similar_array_is_allowed(monkeypatch: pytest.MonkeyPatch) -> None
     assert find_similar(TARGET, OTHERS, client=_client(_ok({"similar": []}))) == []
 
 
+def test_tolerates_markdown_code_fences(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Models (e.g. haiku-4.5) wrap JSON in ```json fences — found live in prod."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    fenced = '```json\n{"similar": [{"id": "c-1", "reason": "related"}]}\n```'
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"choices": [{"message": {"content": fenced}}]})
+
+    refs = find_similar(TARGET, OTHERS, client=_client(handler))
+    assert [r.id for r in refs] == ["c-1"]
+
+
 # --- prompt -------------------------------------------------------------------
 
 
