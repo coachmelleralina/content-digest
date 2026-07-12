@@ -71,6 +71,7 @@ def happy_wiring(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, dict]]:
     monkeypatch.setattr(
         index, "digest_text", lambda text, title=None, language="uk": EN_DIGEST
     )
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     monkeypatch.setattr(
         index, "update_card", lambda card_id, card: updates.append((card_id, card))
     )
@@ -128,6 +129,7 @@ def test_extraction_uses_stored_card_url_and_digest_gets_target_language(
     monkeypatch.setattr(index, "get_card", lambda card_id: dict(STORED_CARD))
     monkeypatch.setattr(index, "extract_from_url", fake_extract)
     monkeypatch.setattr(index, "digest_text", fake_digest)
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     monkeypatch.setattr(index, "update_card", lambda card_id, card: None)
     assert post_translate(language="en").status_code == 200
     assert seen == {
@@ -217,6 +219,7 @@ def test_update_card_db_failure_maps_to_500(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(
         index, "digest_text", lambda text, title=None, language="uk": EN_DIGEST
     )
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     monkeypatch.setattr(
         index,
         "update_card",

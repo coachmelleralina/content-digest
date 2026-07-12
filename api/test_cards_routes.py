@@ -43,6 +43,7 @@ def test_digest_inserts_returned_card(monkeypatch: pytest.MonkeyPatch) -> None:
             summary="s", key_points=[KeyPoint(takeaway="k", quote=None)], tags=["t"], category="C"
         ),
     )
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     monkeypatch.setattr(index, "insert_card", inserted.append)
 
     response = client.post("/api/digest", json={"url": "https://example.com/a"})
@@ -66,6 +67,7 @@ def test_digest_db_failure_maps_to_500(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(card: dict) -> None:
         raise DbError("The database is unavailable. Please try again.")
 
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     monkeypatch.setattr(index, "insert_card", boom)
     response = client.post("/api/digest", json={"url": "https://example.com/a"})
     assert response.status_code == 500

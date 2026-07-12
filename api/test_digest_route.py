@@ -52,6 +52,8 @@ def happy_wiring(monkeypatch: pytest.MonkeyPatch) -> None:
     # Feature 011: the route persists the card; storage behavior is specced in
     # test_cards_routes.py — here it is a no-op.
     monkeypatch.setattr(index, "insert_card", lambda card: None)
+    # Feature 020: the save path resolves the category against stored ones.
+    monkeypatch.setattr(index, "list_categories", lambda: [])
 
 
 def post_digest(url: object = URL, **extra: object) -> "TestClient.response_class":  # type: ignore[name-defined]
@@ -116,6 +118,7 @@ def test_digest_receives_extracted_text_title_and_default_language(
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
     monkeypatch.setattr(index, "digest_text", fake_digest)
     monkeypatch.setattr(index, "insert_card", lambda card: None)
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     assert post_digest().status_code == 200  # no language in body → default "uk"
     assert seen == {"text": ARTICLE.text, "title": ARTICLE.title, "language": "uk"}
 
@@ -136,6 +139,7 @@ def test_explicit_language_is_passed_to_digest(
     monkeypatch.setattr(index, "extract_from_url", lambda url: ARTICLE)
     monkeypatch.setattr(index, "digest_text", fake_digest)
     monkeypatch.setattr(index, "insert_card", lambda card: None)
+    monkeypatch.setattr(index, "list_categories", lambda: [])
     assert post_digest(language=language).status_code == 200
     assert seen["language"] == language
 

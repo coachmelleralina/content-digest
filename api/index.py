@@ -24,6 +24,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 
+from categories import resolve_category
 from db import (
     DbError,
     apply_schema,
@@ -31,6 +32,7 @@ from db import (
     get_card,
     insert_card,
     list_cards,
+    list_categories,
     update_card,
 )
 from digest import DigestApiError, DigestConfigError, DigestParseError, digest_text
@@ -117,6 +119,12 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
     t2 = time.monotonic()
     print(f"PHASE-TIMING digest: extract={t1 - t0:.1f}s ai={t2 - t1:.1f}s")
 
+    # Feature 020 (issue #12): file near-duplicate labels under existing sections.
+    try:
+        category = resolve_category(digest.category, list_categories())
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
     card: dict[str, object] = {
         "id": str(uuid.uuid4()),
         "url": request.url,
@@ -128,7 +136,7 @@ def digest_route(request: DigestRequest) -> dict[str, object]:
             for point in digest.key_points
         ],
         "tags": digest.tags,
-        "category": digest.category,
+        "category": category,
         # Feature 015: the digest language is saved on the card
         "language": request.language,
         "createdAt": datetime.now(timezone.utc).isoformat(),
@@ -185,6 +193,12 @@ def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, o
     t2 = time.monotonic()
     print(f"PHASE-TIMING translate: extract={t1 - t0:.1f}s ai={t2 - t1:.1f}s")
 
+    # Feature 020 (issue #12): a re-digest must not re-split an existing section.
+    try:
+        category = resolve_category(digest.category, list_categories())
+    except DbError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
     updated: dict[str, object] = {
         **card,
         "title": article.title,
@@ -194,7 +208,7 @@ def translate_card_route(card_id: str, request: TranslateRequest) -> dict[str, o
             for point in digest.key_points
         ],
         "tags": digest.tags,
-        "category": digest.category,
+        "category": category,
         "language": request.language,
     }
     try:

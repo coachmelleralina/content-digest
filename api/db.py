@@ -150,6 +150,22 @@ def list_cards() -> list[dict[str, Any]]:
     return [row_to_card(row) for row in rows]
 
 
+def list_categories() -> list[str]:
+    """Distinct stored category labels, oldest section first (feature 020).
+
+    First-appearance order makes resolve_category deterministic: the earliest
+    section's casing wins when a new label matches several existing ones.
+    """
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                "SELECT category FROM cards GROUP BY category ORDER BY MIN(created_at)"
+            ).fetchall()
+    except psycopg.Error as exc:
+        raise DbError(_USER_MESSAGE) from exc
+    return [row[0] for row in rows]
+
+
 def delete_card(card_id: str) -> bool:
     try:
         with _connect() as conn:
