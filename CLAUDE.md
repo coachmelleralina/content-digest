@@ -79,18 +79,20 @@ takeaway deep links, per-card UA|RU|EN translate switcher, and a per-card "По�
 (feature 019: `findSimilar` → `resolveSimilar` → inline list; click scrolls + highlights the
 target card; bundled `SimilarUiProps`). Real-API `lib/api.ts` (Vite proxy in dev; vitest keeps
 the mock). 103 vitest green.
-**Backend (features 004 008–011 014 015 019):** `POST /api/digest {url, language}` — ELI5
+**Backend (features 004 008–011 014 015 019 020):** `POST /api/digest {url, language}` — ELI5
 digest: simple-words explanation, `keyPoints = [{takeaway, quote|null}]` (quotes verified
-code-side), canonical lowercase tags, language uk/ru/en. `POST /api/cards/{id}/translate
-{language}` re-extracts + re-digests in place. `POST /api/cards/{id}/similar` ranks other board
-cards by meaning (`similar.py`, one OpenRouter call, ids filtered to the board). Plus GET/DELETE
-cards, Postgres. 128 pytest green.
+code-side), canonical lowercase tags, language uk/ru/en; category resolved against stored
+sections before save (feature 020: `categories.py` port of feature 002 + `list_categories`).
+`POST /api/cards/{id}/translate {language}` re-extracts + re-digests in place (category
+resolved the same way). `POST /api/cards/{id}/similar` ranks other board cards by meaning
+(`similar.py`, one OpenRouter call, ids filtered to the board). Plus GET/DELETE cards,
+Postgres. 146 pytest green.
 **Deployed (feature 013, issue #11): https://content-digest.vercel.app** — public (owner's
 choice), Neon Postgres via Vercel integration (env vars are sensitive: values exist only inside
 deployments), OpenRouter funded → paid default model. Prod e2e green: digest → persist → list →
 delete. Deploys via `npx vercel deploy --prod` (GitHub auto-deploy not wired yet).
-**Backlog:** #12 wiring (normalize categories on save), rate limiting, GitHub auto-deploy,
-shared `makeCard` spec factory (three fixture fan-outs in a row — retros 016/017).
+**Backlog:** rate limiting, GitHub auto-deploy, shared `makeCard` spec factory (three fixture
+fan-outs in a row — retros 016/017).
 
 ## Dev server
 
@@ -168,6 +170,9 @@ Backend (from `api/`; Python 3.10+, 3.12 recommended — Vercel runtime is 3.12;
 - [019-similar-materials](docs/retrospectives/019-similar-materials.md) — bundled per-card props
   into one object to keep components render-only; a shared `openrouter.py` helper is the next
   step now that two callers duplicate the call skeleton.
+- [020-category-normalization-on-save](docs/retrospectives/020-category-normalization-on-save.md)
+  — issue #12's "remaining work" note went stale when the save path moved server-side; ported
+  the module with a mirrored spec as the TS↔Python sync mechanism.
 
 ## Escalation rules
 
